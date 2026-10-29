@@ -2,6 +2,21 @@
 
 All notable changes to Gitminal are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-10-29
+
+### Added
+
+- Shared feature search overlay. Pressing `/` in Remotes, Tags, Stashes, or Worktrees opens one wide modal with a non-scrolling search field, wrapping details for the highlighted item, and a single scrolling results list. Results come from the same repository selectors as the sidebars and are not limited by the sidebar render caps, and names keep their `remote/` prefix, full tag name, stash index plus object identity, and absolute worktree path. The arrow keys, paging, Home, and End move only the overlay highlight; Escape closes immediately with the sidebar focus and selection unchanged, and Enter closes the modal and scrolls the accepted row into view.
+- Local-tracker marker on remote branches. A `[L]` prefix marks a remote branch that at least one local branch tracks, even when the local name differs or the tracker is inactive or checked out in another worktree.
+- Documentation site under `web/`, deployed by `.github/workflows/deploy-web-ftp.yml`.
+
+### Changed
+
+- Ordinary Fetch (`f`) now always fetches origin's configured refspecs with `git fetch --progress --no-prune --no-prune-tags -- origin`, independently of local upstreams. The command palette offers one Fetch entry per configured remote and runs the chosen remote explicitly. A missing origin blocks with `unknown-remote` instead of silently choosing another remote, and a fetch refspec that could write local branches is refused with the new `unsafe-fetch-refspec` reason.
+- `config.remote.fetchScope` keeps its `local` default and `current` alternative but now governs only Fetch --prune, whose scoped fetch phase is unchanged.
+- Remotes, Tags, Stashes, and Worktrees no longer render an inline search field; Branches keeps its own. This removes `RemoteFilter` and `useRemoteFilter`.
+- Remote rows are now the branch name alone beneath a remote group header, with the stale or unknown marker and the new `[L]` marker inline. Within each group, branches sort by tip commit date newest first with branch name as the tie-breaker, and remote search results use the same order. Command targets and search identities stay remote-qualified.
+
 ## [1.3.0] - 2026-10-28
 
 ### Changed

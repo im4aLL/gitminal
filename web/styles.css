@@ -2406,9 +2406,10 @@ a {
     display: none;
   }
 
-  /* Fall back to the static capture so the workbench still demos the UI. */
+  /* Fall back to the static capture so the workbench still demos the UI. The ID selector already
+     outranks the user-agent rule for the hidden attribute, so no !important is needed. */
   #tui-screenshot-view {
-    display: block !important;
+    display: block;
   }
 
   /* Bottom bar: keep only hints that still apply (palette, copy install). */
@@ -2567,6 +2568,10 @@ a {
   }
 }
 
+/* The universal selector cannot outrank the class-level animation rules above, so the reduced-motion
+   reset keeps !important by design. */
+/* biome-ignore-start lint/complexity/noImportantStyles: a reduced-motion reset must override every
+   animation and transition, which the universal selector alone cannot do. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -2577,3 +2582,4 @@ a {
     scroll-behavior: auto !important;
   }
 }
+/* biome-ignore-end lint/complexity/noImportantStyles: end of the reduced-motion reset. */
