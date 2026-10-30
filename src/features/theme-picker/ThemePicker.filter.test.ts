@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { THEMES } from "@/domain/theme/theme.registry";
 import { filterThemeRows } from "@/features/theme-picker/ThemePicker.filter";
 import type { ThemePickerRow } from "@/features/theme-picker/useThemePicker.types";
 
@@ -10,7 +11,14 @@ import type { ThemePickerRow } from "@/features/theme-picker/useThemePicker.type
  * @returns A row with the fixed test values.
  */
 function row(name: ThemePickerRow["name"], label: string): ThemePickerRow {
-  return { name, label, variant: "dark", active: false, swatchColor: null };
+  return {
+    name,
+    label,
+    variant: "dark",
+    active: false,
+    swatchColor: null,
+    tokens: THEMES["catppuccin-mocha"].tokens,
+  };
 }
 
 /** Rows used by every case, in catalogue order. */

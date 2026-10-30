@@ -65,7 +65,7 @@ Gitminal's theme detection reads `NO_COLOR`, `COLORTERM`, and `TERM`; setting `F
 
 ## Configuration
 
-Gitminal reads an optional `config.json`. The loader checks `$GITMINAL_CONFIG`, then `$XDG_CONFIG_HOME/gitminal/config.json`, then `~/.config/gitminal/config.json`, and finally `%APPDATA%\gitminal\config.json` on Windows. `keybindings.json` and `theme.json` sit next to it unless `$GITMINAL_KEYBINDINGS` or `$GITMINAL_THEME` overrides them.
+Gitminal reads an optional `config.json`. The loader checks `$GITMINAL_CONFIG`, then `$XDG_CONFIG_HOME/gitminal/config.json`, then `~/.config/gitminal/config.json`, and finally `%APPDATA%\gitminal\config.json` on Windows. `keybindings.json` and `theme.json` sit next to it unless `$GITMINAL_KEYBINDINGS` or `$GITMINAL_THEME` overrides them. Your own theme files live in the `themes` directory beside `config.json` unless `$GITMINAL_THEMES_DIR` overrides it.
 
 Every key is optional. An invalid field keeps the previous effective value and adds a warning; unknown fields and safety settings are reported and ignored.
 
@@ -91,7 +91,7 @@ Every key is optional. An invalid field keeps the previous effective value and a
 
 ### `theme`
 
-`theme` selects a built-in palette. An unknown name falls back to Catppuccin Mocha and reports a warning, and `theme.json` can override individual tokens on top of any built-in theme. Every built-in theme is checked against the documented contrast floors, including their diff line backgrounds.
+`theme` selects a palette: a built-in name from the table below, the name of one of your own theme files, or `terminal` for the Native Terminal theme described further down. An unknown name falls back to Catppuccin Mocha and reports a warning, and `theme.json` can override individual tokens on top of any theme. Every built-in theme is checked against the documented contrast floors, including their diff line backgrounds.
 
 <!-- theme-table:start -->
 | Name | Palette name | Variant |
@@ -137,6 +137,50 @@ Every key is optional. An invalid field keeps the previous effective value and a
 | `jellybeans` | Jellybeans | dark |
 | `tender` | Tender | dark |
 <!-- theme-table:end -->
+
+### Your own themes
+
+Drop a JSON file into the themes directory and it becomes a theme you can select. Gitminal reads `<config dir>/themes/*.json` at startup and on `app.reloadConfig`, or the directory named by `$GITMINAL_THEMES_DIR` (an absolute value is used as written, a relative one resolves against the directory you launched from). A missing directory is normal and silent. Only regular `.json` files are read, subdirectories are not searched, at most 64 files are read, and each file is capped at 256 KB; file names are read in sorted order, so a name collision always resolves the same way. The picker's `Export` button writes one of these files for the theme you are looking at, so the easiest way to start is to export a built-in and edit it. An exported built-in gains a `-custom` suffix (for example `nord-custom.json`), because a theme file may not reuse a built-in name.
+
+```json
+{
+  "version": 1,
+  "name": "hadi-ink",
+  "label": "Hadi Ink",
+  "variant": "dark",
+  "extends": "flexoki-ink",
+  "colors": {
+    "accent": "#7fb3d5",
+    "background": "#101216",
+    "graph": ["#7fb3d5", "#a6e3a1", "#f9e2af", "#f38ba8"]
+  }
+}
+```
+
+| Field | Required | Rule |
+| --- | --- | --- |
+| `version` | no | Absent or `1`. Any other value rejects the file with a warning. |
+| `name` | yes | `/^[a-z0-9][a-z0-9-]*$/`, 1 to 64 characters. This is the value you write into `config.json` `theme`. |
+| `label` | no | Display name. Defaults to `name`. |
+| `variant` | no | `dark` or `light`. Derived from the resolved `background` when absent. |
+| `extends` | no | A built-in theme name only. Absence means standalone. |
+| `colors` | yes | The same token map `theme.json` accepts. Unknown names warn and are dropped, and every value must match `#RRGGBB`. `graph` is an array of colors. |
+
+There is one rule: **missing tokens resolve against `extends`, and with no `extends` nothing may be missing.** A theme that extends a built-in inherits every token it omits. A standalone theme must define all 24 tokens plus a `graph` list, or the file is rejected with one warning naming each missing token, for example `Theme "hadi-ink" needs 3 more colors: diffHunk, panel, scrollbar.` A registered theme is therefore always complete.
+
+`panel` is required even though nothing reads it today, so it is never a special case. `graph` replaces the inherited lane list rather than merging, and a list of 4 to 8 colors looks best; lists are accepted up to 16. Because graph lanes are indexed with a modulo, a single color renders too. An invalid color or unknown token name warns and is dropped, which counts as a missing token for a standalone theme. A name may not shadow a built-in theme or an earlier file, and `terminal` is reserved for the Native Terminal theme, so the first registration always wins. Contrast is reported but never enforced: a user theme below the AA floor still loads, with one warning, because experimenting with colors must not block launch.
+
+Every theme file problem is one bounded warning that names the file, and at most five are reported plus one `+N more themes could not be loaded.` line for the rest; they appear in the top bar, the console, and Help under the `Theme:` prefix, exactly like configuration warnings. A broken file never prevents startup.
+
+The theme picker splits themes into a `Dark` and a `Light` tab, opens on the tab of the theme you are using, and lists names alphabetically inside each tab, with your themes interleaved among the built-ins instead of appended. Up and Down (or `j` and `k`) always move the highlight and hand the keyboard to the list, from the tab bar, the list, or the footer; Enter applies. Left and Right (or `h` and `l`) always move the keyboard to the footer buttons and step through Export, Cancel, and Apply with wraparound. `[` and `]` switch tabs from any zone, Enter runs the focused footer control once the footer owns the keyboard, Esc cancels, and `e` exports the highlighted theme without closing the picker. While the tab bar owns the keyboard its labels brighten and the selected tab is prefixed with `>`, so the focus zone is visible in text as well as color. The selected tab is a flat fill with no underline border.
+
+### Native Terminal
+
+Select `Native Terminal` in the theme picker to adopt the color scheme your terminal is already using. Gitminal asks the terminal for its palette at startup (`renderer.getPalette`, which sends the OSC 4 palette queries plus OSC 10 and 11 for the default foreground and background) and maps the answer onto its own tokens. Nothing is read from a shipped table, so your Ubuntu, Nord, Solarized, or custom scheme looks like your scheme. The selection is stored as `"theme": "terminal"` in `config.json` and survives a restart.
+
+The terminal has to answer those queries. Most modern terminals do, including iTerm2, WezTerm, Kitty, Alacritty, Ghostty, Windows Terminal, GNOME Terminal, and Konsole. tmux is handled by OpenTUI's tmux-aware detector, so a scheme set inside tmux is read as well. If your terminal does not answer, Gitminal falls back to Catppuccin Mocha and tells you why in one warning; startup is never blocked. Detection is skipped entirely when the terminal reports no color support or `NO_COLOR` is set.
+
+The detected background decides whether the entry appears in the `Dark` or the `Light` tab. Two mapped values are guarded rather than copied: secondary text falls back to the default foreground when the terminal's gray is too close to the background, and the diff line backgrounds are tinted from the strongest tint down until the primary text stays readable. A scheme that cannot reach those floors still loads, with one warning, because the colors are your choice. Detection runs once, so after changing your terminal profile run `app.reloadConfig` from the command palette to re-detect; the reload decides from the theme name it resolves, so it also re-detects and adopts Native Terminal after a startup detection that failed. Native Terminal is not editable and is not a theme file; use the picker's `Export` button to write it out as a `native-terminal` theme you can customize.
 
 ### `graph.style`
 
@@ -289,6 +333,16 @@ Defaults are scoped to the focused context: global keys work everywhere (forms a
 | Search commits | `graph.search` | `/`, `ctrl+f`, `mod+f` |
 | Load older commits | `graph.loadOlder` | `L` |
 | Search the open overlay | `overlay.search` | `/` |
+
+### Theme picker
+
+These three actions are overlay-scoped: they apply while the theme picker is the open modal, whatever tab bar, rows, or footer zone owns the keyboard. They are rebindable through `keybindings.json` like any other action. While the picker's search field has focus, the printable characters go into the field instead, so `e`, `[`, and `]` can be typed into a query.
+
+| Action | ID | Default keys |
+| --- | --- | --- |
+| Previous tab | `theme.tabLeft` | `[` |
+| Next tab | `theme.tabRight` | `]` |
+| Export theme | `theme.export` | `e` |
 
 ### Branches, remotes, tags, stashes, and worktrees
 

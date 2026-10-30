@@ -1,8 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  THEME_ROW_DARK_LABEL,
-  THEME_ROW_LIGHT_LABEL,
-} from "@/features/theme-picker/ThemeRow.constants";
+import { THEME_ROW_ID_PREFIX } from "@/features/theme-picker/ThemeRow.constants";
 import type { ThemePickerRow } from "@/features/theme-picker/useThemePicker.types";
 import { ICONS } from "@/theme/icons";
 import { useTokens } from "@/theme/useTokens";
@@ -12,11 +9,14 @@ import { Swatch } from "@/ui/Swatch";
 /**
  * Renders one theme row in the picker list.
  *
- * The row is a custom `<box>` row rather than a `<select>` option because it needs a swatch, a
- * light-or-dark label, and an active marker in one line. It composes `ListRow` for the selection
- * marker and background and `Swatch` for the color cell. The active row carries the `*` marker from
- * `ICONS.currentBranch` next to its name, so the active theme is identifiable without color, which
- * is also the state the picker lists when a preview is showing.
+ * The row is a custom `<box>` row rather than a `<select>` option because it needs a swatch and an
+ * active marker in one line. It composes `ListRow` for the selection marker and background and
+ * `Swatch` for the color cell. The active row carries the `*` marker from `ICONS.currentBranch` next
+ * to its name, so the active theme is identifiable without color, which is also the state the picker
+ * lists when a preview is showing.
+ *
+ * The row deliberately renders no light-or-dark label: the tab bar already states the variant of every
+ * row in the list, so repeating it per row would spend width on information the frame already carries.
  *
  * @param props - Row data, selection flags, and the click handler.
  * @returns The composed theme row.
@@ -28,7 +28,6 @@ export function ThemeRow(props: {
   readonly onPress: () => void;
 }): ReactNode {
   const tokens = useTokens();
-  const variantLabel = props.row.variant === "light" ? THEME_ROW_LIGHT_LABEL : THEME_ROW_DARK_LABEL;
 
   return (
     <ListRow
@@ -41,7 +40,6 @@ export function ThemeRow(props: {
         <Swatch color={props.row.swatchColor} />
         <text fg={tokens.text} wrapMode="none">
           {` ${props.row.label}`}
-          <span fg={tokens.muted}>{` ${variantLabel}`}</span>
           {props.row.active ? <span fg={tokens.accent}>{` ${ICONS.currentBranch}`}</span> : null}
         </text>
       </box>
@@ -56,5 +54,5 @@ export function ThemeRow(props: {
  * @returns The row renderable id.
  */
 export function themeRowId(name: string): string {
-  return `theme-row:${name}`;
+  return `${THEME_ROW_ID_PREFIX}:${name}`;
 }

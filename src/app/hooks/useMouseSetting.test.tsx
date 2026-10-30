@@ -7,6 +7,7 @@ import { ConfigProvider } from "@/app/providers/ConfigProvider";
 import type { ConfigSnapshot, ConfigSource } from "@/app/providers/ConfigProvider.types";
 import { DEFAULT_CONFIG, UNRESOLVED_CONFIG_PATHS } from "@/domain/config/config.defaults";
 import type { GitminalConfig } from "@/domain/config/config.types";
+import { createBuiltInCatalogue } from "@/domain/theme/theme.catalogue";
 
 /** Latest configuration context captured by the probe. */
 let latestConfig: ReturnType<typeof useConfig> | undefined;
@@ -26,6 +27,7 @@ function snapshot(mouse: boolean): ConfigSnapshot {
     warnings: [],
     keybindingsFile: {},
     themeOverrides: null,
+    catalogue: createBuiltInCatalogue(),
   };
 }
 

@@ -28,4 +28,5 @@ export const UNRESOLVED_CONFIG_PATHS: ConfigFilePaths = Object.freeze({
   config: null,
   keybindings: null,
   theme: null,
+  themesDir: null,
 });

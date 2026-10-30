@@ -6,8 +6,10 @@ import { useStatus } from "@/app/hooks/useStatus";
 import { useTheme } from "@/app/hooks/useTheme";
 import type { ConfigReloadResult } from "@/app/providers/ConfigProvider.types";
 import type { TransientStatus } from "@/app/providers/StatusProvider.types";
+import { useTerminalPalette } from "@/app/providers/useTerminalPalette";
 import { combineConfigurationWarnings } from "@/domain/config/config.warnings";
 import { createConsoleEntryId, formatNoticeEntry } from "@/domain/console/console.format";
+import { TERMINAL_THEME_NAME } from "@/domain/theme/theme.terminal";
 
 /** Action id that reloads the configuration; the same id labels its console notices. */
 const RELOAD_ACTION_ID = "app.reloadConfig";
@@ -38,10 +40,19 @@ const WARNING_SEPARATOR = " | ";
  * status strip and the console stay distinguishable, and the combined list is reported once per
  * distinct set. Reporting reads the same combined list Help renders, so neither surface can report a
  * warning the other already reported.
+ *
+ * A reload also re-detects the terminal palette when Native Terminal is the effective theme. Detection
+ * happens once at startup, so without this step switching the terminal profile mid-session would
+ * leave the app on stale colors. The decision reads the theme name the reload resolved, not the name
+ * of the theme that was rendered before it, because a startup detection failure resolves `terminal` to
+ * the fallback theme; reading the rendered name would then skip detection forever and the terminal
+ * entry could never enter the catalogue in this session. The re-detection clears the renderer's
+ * palette cache first and runs one query, so it is bounded by the same timeout the startup query has.
  */
 export function useConfigActions(): void {
   const config = useConfig();
   const theme = useTheme();
+  const terminal = useTerminalPalette();
   const { setStatus } = useStatus();
   const consoleLog = useConsoleLog();
   const reported = useRef<string | null>(null);
@@ -104,7 +115,13 @@ export function useConfigActions(): void {
 
   useAction(RELOAD_ACTION_ID, { scope: "global", owner: "app" }, () => {
     void (async () => {
-      setReloadResult(await config.reload());
+      const result = await config.reload();
+
+      if (result.theme === TERMINAL_THEME_NAME) {
+        await terminal.redetect();
+      }
+
+      setReloadResult(result);
     })();
   });
 }

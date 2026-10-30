@@ -115,6 +115,7 @@ function snapshot(overrides: Partial<ConfigSnapshot> = {}): ConfigSnapshot {
     warnings: [],
     keybindingsFile: {},
     themeOverrides: null,
+    catalogue: createBuiltInCatalogue(),
     ...overrides,
   };
 }

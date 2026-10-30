@@ -1,7 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import { createConfigSource } from "@/app/providers/config.source";
 import { DEFAULT_CONFIG } from "@/domain/config/config.defaults";
-import type { ConfigFileLoad, LoadedConfigFiles } from "@/domain/config/config.types";
+import type {
+  ConfigFileLoad,
+  LoadedConfigFiles,
+  LoadedThemeFiles,
+} from "@/domain/config/config.types";
+import { THEMES } from "@/domain/theme/theme.registry";
 import { MOCHA_ROLES } from "@/domain/theme/themes/catppuccin";
 
 /** A real built-in palette token, used as a valid raw theme override value. */
@@ -71,6 +76,7 @@ describe("createConfigSource", () => {
       config: "/custom/config.json",
       keybindings: "/custom/keybindings.json",
       theme: "/custom/theme.json",
+      themesDir: "/custom/themes",
     });
 
     await source.load();
@@ -144,5 +150,38 @@ describe("createConfigSource", () => {
 
     expect(snapshot.warnings).toHaveLength(12);
     expect(snapshot.warnings.at(-1)).toContain("more configuration warnings were omitted");
+  });
+
+  it("turns a loaded user theme file into a catalogue entry", async () => {
+    const { graph, ...scalars } = THEMES["flexoki-ink"].tokens;
+    const themes: LoadedThemeFiles = {
+      files: [
+        {
+          fileName: "hadi-ink.json",
+          path: "/custom/themes/hadi-ink.json",
+          value: {
+            version: 1,
+            name: "hadi-ink",
+            label: "Hadi Ink",
+            colors: { ...scalars, graph: [...graph] },
+          },
+          reason: null,
+        },
+      ],
+      warnings: [],
+    };
+    const source = createConfigSource({
+      env: ENV,
+      platform: "linux",
+      homeDir: "/home/developer",
+      loadFiles: async () => loaded(),
+      loadThemeFiles: async () => themes,
+    });
+    const snapshot = await source.load();
+    const entry = snapshot.catalogue.entries.find((candidate) => candidate.name === "hadi-ink");
+
+    expect(entry?.source).toBe("user");
+    expect(entry?.label).toBe("Hadi Ink");
+    expect(snapshot.catalogue.warnings).toEqual([]);
   });
 });

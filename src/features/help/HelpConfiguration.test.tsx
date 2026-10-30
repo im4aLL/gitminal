@@ -3,6 +3,7 @@ import { MarkdownRenderable } from "@opentui/core";
 import { testRender } from "@opentui/react/test-utils";
 import { act, type ReactNode } from "react";
 import { DEFAULT_CONFIG } from "@/domain/config/config.defaults";
+import { createBuiltInCatalogue } from "@/domain/theme/theme.catalogue";
 import { HelpConfiguration } from "@/features/help/HelpConfiguration";
 import {
   HELP_FILE_NOT_PRESENT,
@@ -38,6 +39,7 @@ const SNAPSHOT: Snapshot = {
     config: "/home/developer/.config/gitminal/config.json",
     keybindings: "/home/developer/.config/gitminal/keybindings.json",
     theme: null,
+    themesDir: "/home/developer/.config/gitminal/themes",
   },
   files: [
     {
@@ -56,6 +58,7 @@ const SNAPSHOT: Snapshot = {
   warnings: [...WARNINGS],
   keybindingsFile: {},
   themeOverrides: null,
+  catalogue: createBuiltInCatalogue(),
 };
 
 /**
@@ -110,7 +113,8 @@ describe("HelpConfiguration", () => {
     expect(frame).toContain(HELP_FILE_NOT_PRESENT);
     expect(frame).toContain("config.json: loaded");
     expect(frame).toContain("keybindings.json: missing");
-    expect(frame).toContain("Catppuccin Latte (catppuccin-latte)");
+    expect(frame).toContain("Active theme: Catppuccin Latte (catppuccin-latte, light, built-in)");
+    expect(frame).toContain("/home/developer/.config/gitminal/themes");
 
     await act(async () => {
       await setup.dispose();

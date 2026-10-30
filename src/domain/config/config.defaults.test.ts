@@ -51,7 +51,12 @@ describe("DEFAULT_CONFIG", () => {
 
 describe("UNRESOLVED_CONFIG_PATHS", () => {
   it("reports every path as unresolved", () => {
-    expect(UNRESOLVED_CONFIG_PATHS).toEqual({ config: null, keybindings: null, theme: null });
+    expect(UNRESOLVED_CONFIG_PATHS).toEqual({
+      config: null,
+      keybindings: null,
+      theme: null,
+      themesDir: null,
+    });
     expect(Object.isFrozen(UNRESOLVED_CONFIG_PATHS)).toBe(true);
   });
 });

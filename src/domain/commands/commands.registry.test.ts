@@ -9,11 +9,11 @@ import { ACTION_BY_ID, ACTION_CATALOGUE } from "@/domain/keymap/keymap.defaults"
  * Every entry is a keystroke intent owned by a focused surface, not a palette command: cursor
  * movement (`nav.*`), overlay and field traversal (`focus.next`, `focus.previous`, `overlay.close`,
  * `form.submit`), field triggers (`list.filter`, `overlay.search`, `commit.options`), the inline
- * toggles (`diff.toggle`, `console.clear`), the global stage-all shortcut
- * (`diff.stageAllUnstaged`) that dispatches the bulk diff command with feature-owned paths, and the
- * diff viewport scrolling chords (`diff.scroll*`) that move the diff scrollbox without a command. The
- * registry-completeness test fails when a new action is added without either a descriptor or an
- * explicit entry here.
+ * toggles (`diff.toggle`, `console.clear`), the theme picker's own keys (`theme.*`), the global
+ * stage-all shortcut (`diff.stageAllUnstaged`) that dispatches the bulk diff command with
+ * feature-owned paths, and the diff viewport scrolling chords (`diff.scroll*`) that move the diff
+ * scrollbox without a command. The registry-completeness test fails when a new action is added
+ * without either a descriptor or an explicit entry here.
  */
 const KEY_ONLY_ACTION_IDS: readonly string[] = Object.freeze([
   "nav.up",
@@ -33,6 +33,9 @@ const KEY_ONLY_ACTION_IDS: readonly string[] = Object.freeze([
   "list.filter",
   "graph.loadOlder",
   "overlay.search",
+  "theme.tabLeft",
+  "theme.tabRight",
+  "theme.export",
   "commit.options",
   "form.submit",
   "diff.toggle",

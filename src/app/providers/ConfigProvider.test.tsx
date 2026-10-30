@@ -10,6 +10,7 @@ import type {
 } from "@/app/providers/ConfigProvider.types";
 import { DEFAULT_CONFIG, UNRESOLVED_CONFIG_PATHS } from "@/domain/config/config.defaults";
 import type { ConfigFilePaths, GitminalConfig } from "@/domain/config/config.types";
+import { createBuiltInCatalogue } from "@/domain/theme/theme.catalogue";
 import { readGuardError, renderGuard } from "@/test/react.guard";
 
 /** Paths used by the reload cases. */
@@ -17,6 +18,7 @@ const PATHS: ConfigFilePaths = Object.freeze({
   config: "/cfg/config.json",
   keybindings: "/cfg/keybindings.json",
   theme: "/cfg/theme.json",
+  themesDir: "/cfg/themes",
 });
 
 /** Latest context value rendered by the probe. */
@@ -46,6 +48,7 @@ function snapshot(overrides: Partial<ConfigSnapshot> = {}): ConfigSnapshot {
     warnings: Object.freeze([]),
     keybindingsFile: Object.freeze({}),
     themeOverrides: null,
+    catalogue: createBuiltInCatalogue(),
     ...overrides,
   };
 }
@@ -160,6 +163,7 @@ describe("ConfigProvider defaults", () => {
       config: "/tmp/gitminal/config.json",
       keybindings: "/tmp/gitminal/keybindings.json",
       theme: "/tmp/gitminal/theme.json",
+      themesDir: "/tmp/gitminal/themes",
     };
     const setup = await renderConfig({
       initialConfig: config,
@@ -237,7 +241,7 @@ describe("ConfigProvider reload", () => {
       await setup.renderOnce();
     });
 
-    expect(result).toEqual({ ok: true, warnings: ["a warning"] });
+    expect(result).toEqual({ ok: true, theme: "catppuccin-latte", warnings: ["a warning"] });
     expect(previous).toEqual([startup.config]);
     expect(readLatest()?.config.theme).toBe("catppuccin-latte");
     expect(readLatest()?.warnings).toEqual(["a warning"]);
@@ -273,6 +277,7 @@ describe("ConfigProvider reload", () => {
 
     expect(result).toEqual({
       ok: false,
+      theme: "catppuccin-frappe",
       warnings: ["Unsupported version 2 in config.json; the file was ignored."],
     });
     expect(readLatest()?.config.theme).toBe("catppuccin-frappe");
@@ -303,6 +308,7 @@ describe("ConfigProvider reload", () => {
     });
 
     expect(result?.ok).toBe(false);
+    expect(result?.theme).toBe("catppuccin-latte");
     expect(result?.warnings[0]).toContain("disk on fire");
     expect(readLatest()?.config.theme).toBe("catppuccin-latte");
 
@@ -319,7 +325,11 @@ describe("ConfigProvider reload", () => {
     });
 
     await act(async () => {
-      expect(await readLatest()?.reload()).toEqual({ ok: true, warnings: [] });
+      expect(await readLatest()?.reload()).toEqual({
+        ok: true,
+        theme: DEFAULT_CONFIG.theme,
+        warnings: [],
+      });
     });
 
     expect(readLatest()?.config).toBe(DEFAULT_CONFIG);

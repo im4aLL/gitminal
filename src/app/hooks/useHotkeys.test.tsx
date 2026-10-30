@@ -181,6 +181,14 @@ describe("resolveHotkeyAction", () => {
     ).toEqual({ actionId: "app.palette", scope: "global" });
   });
 
+  it("leaves overlay-scoped printable keys in a modal text field", () => {
+    const context = { overlayOpen: true, textInputFocused: true, inputMode: "search" } as const;
+
+    expect(resolve(key("e"), context)).toBeNull();
+    expect(resolve(key("["), context)).toBeNull();
+    expect(resolve(key("]"), context)).toBeNull();
+  });
+
   it("ignores a stale region when focus is outside every region", () => {
     expect(resolve(key("n"), { activeRegion: "branches", focusInsideRegion: false })).toBeNull();
     expect(resolve(key("n"), { activeRegion: "branches", focusInsideRegion: true })).toEqual({

@@ -1076,8 +1076,8 @@ describe("AppShellHost", () => {
 
     expect(frame).toContain("More remote actions");
     expect(frame).toContain("Enter Activate");
-    expect(frame).toContain("Up Move up");
-    expect(frame).toContain("Down Move down");
+    expect(frame).toContain("Up/k Move up");
+    expect(frame).toContain("Down/j Move down");
     expect(frame).toContain("Esc Close or cancel");
 
     await act(async () => {

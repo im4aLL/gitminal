@@ -5,8 +5,10 @@ import type {
   ConfigValidationStatus,
   GitminalConfig,
   LoadedConfigFiles,
+  LoadedThemeFiles,
 } from "@/domain/config/config.types";
 import type { KeybindingOverrides, KeymapPlatform } from "@/domain/keymap/keymap.types";
+import type { ThemeCatalogue } from "@/domain/theme/theme.catalogue.types";
 
 /**
  * One resolved configuration state: the effective values plus what the files contributed.
@@ -29,12 +31,28 @@ export interface ConfigSnapshot {
   readonly keybindingsFile: KeybindingOverrides;
   /** Raw parsed `theme.json`, or `null` when it is absent or unusable. */
   readonly themeOverrides: unknown;
+  /**
+   * Catalogue the theme layer resolves against: the built-ins plus every accepted user theme file.
+   *
+   * It carries the theme-file warnings, so a reload that fixes or breaks a file updates both the
+   * selectable themes and the reported warnings in one transition.
+   */
+  readonly catalogue: ThemeCatalogue;
 }
 
 /** Outcome of one reload, reported to the action that requested it. */
 export interface ConfigReloadResult {
   /** True when the reload applied its files; false when the main file was rejected. */
   readonly ok: boolean;
+  /**
+   * Effective theme name after the reload.
+   *
+   * This is the requested name from the configuration that is now effective, which is what a reload
+   * has to act on when it re-detects the terminal palette. It is the value the session was already
+   * running with when the file was rejected or the load threw, because the previous configuration
+   * stays effective then.
+   */
+  readonly theme: string;
   /** Bounded warnings produced by this reload. */
   readonly warnings: readonly string[];
 }
@@ -74,6 +92,8 @@ export interface ConfigContextValue {
   readonly keybindingsFile: KeybindingOverrides;
   /** Raw parsed `theme.json`, consumed by `ThemeProvider`. */
   readonly themeOverrides: unknown;
+  /** Catalogue of built-in and user themes, consumed by `ThemeProvider` and the picker. */
+  readonly catalogue: ThemeCatalogue;
   /** Re-reads configuration files and applies valid changes in place. */
   readonly reload: () => Promise<ConfigReloadResult>;
 }
@@ -88,6 +108,8 @@ export interface ConfigSourceOptions {
   readonly homeDir?: string;
   /** File loading override used by tests; defaults to the real loader. */
   readonly loadFiles?: (paths: ConfigFilePaths) => Promise<LoadedConfigFiles>;
+  /** Themes directory scan override used by tests; defaults to the real scan. */
+  readonly loadThemeFiles?: (directory: string | null) => Promise<LoadedThemeFiles>;
 }
 
 /** Props accepted by `ConfigProvider`. */

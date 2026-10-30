@@ -48,3 +48,29 @@ export function getCatalogueEntry(
 ): ThemeCatalogueEntry | undefined {
   return catalogue.entries.find((entry) => entry.name === name);
 }
+
+/**
+ * Appends the detected Native Terminal entry to a catalogue.
+ *
+ * The terminal theme is detected rather than defined, so it is never part of the built-in registry:
+ * the resolved catalogue is the built-in or user catalogue plus this one entry, appended last in
+ * identity order. When detection produced no entry the same catalogue is returned by reference, so a
+ * terminal that cannot answer the query leaves every memoized consumer untouched.
+ *
+ * @param catalogue - Catalogue to widen, already containing the built-ins and user themes.
+ * @param entry - Detected terminal entry, or `null` when detection was gated out.
+ * @returns The widened catalogue, or the same catalogue when there is nothing to add.
+ */
+export function withTerminalEntry(
+  catalogue: ThemeCatalogue,
+  entry: ThemeCatalogueEntry | null,
+): ThemeCatalogue {
+  if (entry === null) {
+    return catalogue;
+  }
+
+  return Object.freeze({
+    entries: Object.freeze([...catalogue.entries, entry]),
+    warnings: catalogue.warnings,
+  });
+}

@@ -14,6 +14,19 @@ import type { HexColor, ThemeTokens } from "./theme.types";
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
 /**
+ * Reports whether a value is one accepted `#RRGGBB` color.
+ *
+ * The color-map validator and the detected-terminal mapper share this single predicate, so a value
+ * the terminal reports is accepted under exactly the rule a theme file lives by.
+ *
+ * @param value - Candidate value.
+ * @returns True when the value is a six-digit hex color string.
+ */
+export function isHexColor(value: unknown): value is HexColor {
+  return typeof value === "string" && HEX_COLOR_PATTERN.test(value);
+}
+
+/**
  * Largest graph lane list a color map may contribute.
  *
  * One to sixteen lanes render correctly because `GraphLanes` indexes with
@@ -189,7 +202,7 @@ function readTokenOverrides(
       continue;
     }
 
-    if (typeof value !== "string" || !HEX_COLOR_PATTERN.test(value)) {
+    if (typeof value !== "string" || !isHexColor(value)) {
       options.warnings.push(`Invalid color for "${token}" in ${options.source}; ${dropped.color}`);
 
       continue;
@@ -234,7 +247,7 @@ function readGraphLanes(
   const lanes: HexColor[] = [];
 
   for (const value of raw) {
-    if (typeof value !== "string" || !HEX_COLOR_PATTERN.test(value)) {
+    if (!isHexColor(value)) {
       options.warnings.push(`Invalid graph lane color in ${options.source}; ${dropped.lane}`);
 
       continue;

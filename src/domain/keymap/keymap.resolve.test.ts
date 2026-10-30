@@ -303,6 +303,18 @@ describe("resolveKeymap defaults", () => {
     }
   });
 
+  it("binds the theme picker tab and export actions in the overlay context", () => {
+    const keymap = resolveKeymap({ platform: "linux" });
+
+    expect(actionKeys(keymap, "theme.tabLeft")).toEqual(["["]);
+    expect(actionKeys(keymap, "theme.tabRight")).toEqual(["]"]);
+    expect(actionKeys(keymap, "theme.export")).toEqual(["e"]);
+    expect(actionForKey(keymap, "overlay", "[")).toBe("theme.tabLeft");
+    expect(actionForKey(keymap, "overlay", "]")).toBe("theme.tabRight");
+    expect(actionForKey(keymap, "overlay", "e")).toBe("theme.export");
+    expect(keymap.conflicts).toEqual([]);
+  });
+
   it("keeps h and l on expand and collapse inside the diff context", () => {
     const keymap = resolveKeymap({ platform: "linux" });
 

@@ -1,7 +1,7 @@
 import type { ThemeTokens, ThemeVariant } from "./theme.types";
 
 /** Where one catalogue entry came from. */
-export type ThemeDefinitionSource = "built-in" | "user";
+export type ThemeDefinitionSource = "built-in" | "user" | "terminal";
 
 /**
  * One theme the resolver can select by name.
@@ -30,4 +30,20 @@ export interface ThemeCatalogue {
   readonly entries: readonly ThemeCatalogueEntry[];
   /** Warnings produced while building the catalogue, for example rejected theme files. */
   readonly warnings: readonly string[];
+}
+
+/**
+ * One theme file handed to the catalogue builder by the configuration loader.
+ *
+ * The loader owns the filesystem, so it passes the parsed value and its own read failure here
+ * instead of a path: the catalogue builder stays pure, and the loader keeps the placement rule that
+ * `src/domain/theme` never touches the filesystem.
+ */
+export interface ThemeFileSource {
+  /** File name inside the themes directory, used in warnings. */
+  readonly fileName: string;
+  /** Parsed JSON value, or `null` when the file could not be read or parsed. */
+  readonly value: unknown;
+  /** One-line reason the loader could not use the file, or `null` when it parsed. */
+  readonly reason: string | null;
 }

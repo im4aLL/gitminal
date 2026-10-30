@@ -39,7 +39,7 @@ export function SidebarSwitcher(props: {
       ref={ref}
       options={options}
       showDescription={false}
-      showUnderline
+      showUnderline={false}
       onChange={(index) => props.onSelectPanel(index)}
     />
   );

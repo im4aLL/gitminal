@@ -607,6 +607,45 @@ describe("Footer", () => {
     });
   });
 
+  it("advertises the theme picker keys and every movement binding", async () => {
+    const setup = await renderFooter(
+      <FooterHarness region="branches">
+        <ModalModeProbe />
+        <Registration actionId="nav.up" options={{ scope: "overlay" }} />
+        <Registration actionId="nav.down" options={{ scope: "overlay" }} />
+        <Registration actionId="nav.left" options={{ scope: "overlay" }} />
+        <Registration actionId="nav.right" options={{ scope: "overlay" }} />
+        <Registration actionId="overlay.search" options={{ scope: "overlay" }} />
+        <Registration actionId="theme.tabLeft" options={{ scope: "overlay" }} />
+        <Registration actionId="theme.tabRight" options={{ scope: "overlay" }} />
+        <Registration actionId="theme.export" options={{ scope: "overlay" }} />
+        <Registration actionId="overlay.close" options={{ scope: "global", owner: "app" }} />
+      </FooterHarness>,
+      200,
+    );
+
+    await act(async () => {
+      await setup.renderOnce();
+    });
+    await focusRegion(setup, "branches");
+
+    const frame = setup.captureCharFrame();
+
+    expect(frame).toContain("Up/k Move up");
+    expect(frame).toContain("Down/j Move down");
+    expect(frame).toContain("Left/h Move left");
+    expect(frame).toContain("Right/l Move right");
+    expect(frame).toContain("[ Previous tab");
+    expect(frame).toContain("] Next tab");
+    expect(frame).toContain("e Export theme");
+    expect(frame).toContain("/ Search");
+    expect(frame).toContain("Esc Close or cancel");
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
   it("advertises console keys in the footer and hides Clear while the console is empty", async () => {
     const setup = await renderFooter(
       <FooterHarness region="console">

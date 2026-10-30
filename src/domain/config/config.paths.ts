@@ -15,28 +15,32 @@ const THEME_FILE_NAME = "theme.json";
 /** Directory name created under the XDG, home, or APPDATA location. */
 const APP_DIRECTORY_NAME = "gitminal";
 
+/** Directory name that holds user theme files, created beside `config.json`. */
+const THEMES_DIRECTORY_NAME = "themes";
+
 /**
- * Resolves the three optional configuration file locations.
+ * Resolves the configuration file locations and the user themes directory.
  *
  * `config.json` uses the documented precedence: `$GITMINAL_CONFIG` when set and non-empty, then
  * `$XDG_CONFIG_HOME/gitminal/config.json` when that variable is set, then
  * `~/.config/gitminal/config.json` when a home directory is available, and finally on Windows
  * `%APPDATA%\gitminal\config.json` when the XDG and home paths are unavailable.
  * `keybindings.json` and `theme.json` come from `GITMINAL_KEYBINDINGS` and `GITMINAL_THEME`, or live
- * next to the resolved `config.json`.
+ * next to the resolved `config.json`. `themesDir` comes from `$GITMINAL_THEMES_DIR`, or is the
+ * `themes` directory beside the resolved `config.json`.
  *
  * Environment, platform, home directory, and working directory inputs are injectable so per-OS
  * resolution stays testable; production reads the process environment and the launch working
  * directory. Every result is an absolute path, or `null` when the precedence runs out: a relative
- * `$GITMINAL_CONFIG`, `$GITMINAL_KEYBINDINGS`, or `$GITMINAL_THEME` value is resolved against the
- * launch working directory, while directory values (`$XDG_CONFIG_HOME`, `$APPDATA`, and the home
- * directory) must already be absolute, so a relative one is ignored and the next documented
- * fallback decides the location. An explicit override whose relative value cannot be resolved
- * because the launch working directory is unavailable is ignored the same way. No file existence is
- * checked here.
+ * `$GITMINAL_CONFIG`, `$GITMINAL_KEYBINDINGS`, `$GITMINAL_THEME`, or `$GITMINAL_THEMES_DIR` value is
+ * resolved against the launch working directory, while directory values (`$XDG_CONFIG_HOME`,
+ * `$APPDATA`, and the home directory) must already be absolute, so a relative one is ignored and the
+ * next documented fallback decides the location. An explicit override whose relative value cannot
+ * be resolved because the launch working directory is unavailable is ignored the same way. No file
+ * or directory existence is checked here.
  *
  * @param options - Environment, platform, home directory, and working directory inputs.
- * @returns The resolved paths for the three files.
+ * @returns The resolved paths for the three files and the themes directory.
  */
 export function resolveConfigPaths(options: ResolveConfigPathsOptions = {}): ConfigFilePaths {
   const env = options.env ?? process.env;
@@ -57,14 +61,18 @@ export function resolveConfigPaths(options: ResolveConfigPathsOptions = {}): Con
     theme:
       resolveOverridePath(readEnvironmentValue(env, "GITMINAL_THEME"), workingDirectory) ??
       joinDirectory(directory, THEME_FILE_NAME),
+    themesDir:
+      resolveOverridePath(readEnvironmentValue(env, "GITMINAL_THEMES_DIR"), workingDirectory) ??
+      joinDirectory(directory, THEMES_DIRECTORY_NAME),
   };
 }
 
 /**
- * Resolves the directory that holds `config.json`, `keybindings.json`, and `theme.json`.
+ * Resolves the directory that holds `config.json`, `keybindings.json`, `theme.json`, and `themes`.
  *
  * An explicit `$GITMINAL_CONFIG` keeps its own file but still hosts the companion files, so a
- * private directory can hold all three. The Windows `%APPDATA%\gitminal` fallback applies only when
+ * private directory can hold all three plus the themes directory. The Windows
+ * `%APPDATA%\gitminal` fallback applies only when
  * no explicit file and no XDG override exist and the home directory could not be resolved, so the
  * documented precedence stays literal on every platform. Both directory variables are read only
  * when they are absolute, because the XDG base directory specification requires it and a relative

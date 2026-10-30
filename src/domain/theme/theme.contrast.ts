@@ -1,4 +1,4 @@
-import type { HexColor } from "./theme.types";
+import type { HexColor, ThemeVariant } from "./theme.types";
 
 /** Channel values are normalized to this scale before gamma correction. */
 const CHANNEL_MAX = 255;
@@ -17,6 +17,9 @@ const GAMMA_DIVISOR = 1.055;
 
 /** Exponent of the gamma segment. */
 const GAMMA_EXPONENT = 2.4;
+
+/** Background luminance below this value derives a dark variant, otherwise light. */
+const DARK_LUMINANCE_THRESHOLD = 0.5;
 
 /** Relative luminance weight of the red channel. */
 const RED_WEIGHT = 0.2126;
@@ -52,17 +55,33 @@ export function contrastRatio(foreground: HexColor, background: HexColor): numbe
  *
  * The luminance is the shared brightness measure behind `contrastRatio` and the theme variant rule:
  * a user theme without an explicit `variant` is dark when its resolved background luminance is below
- * 0.5. Exporting the single implementation keeps a caller from re-deriving the sRGB coefficients.
+ * `DARK_LUMINANCE_THRESHOLD`. Callers use `contrastRatio` and `deriveThemeVariant` instead of
+ * re-deriving the sRGB coefficients.
  *
  * @param color - The color to evaluate.
  * @returns The relative luminance from 0 to 1.
  */
-export function relativeLuminance(color: HexColor): number {
+function relativeLuminance(color: HexColor): number {
   return (
     RED_WEIGHT * readChannel(color, 1) +
     GREEN_WEIGHT * readChannel(color, 3) +
     BLUE_WEIGHT * readChannel(color, 5)
   );
+}
+
+/**
+ * Derives the light or dark variant of one background color.
+ *
+ * One rule serves every theme source that has no explicit `variant`: a user theme file and the
+ * detected terminal palette both classify their background by relative luminance, so a light
+ * terminal scheme and a light theme file land in the same Light tab. The threshold lives here so the
+ * two readers cannot drift apart.
+ *
+ * @param background - Resolved background color.
+ * @returns `dark` below the threshold, otherwise `light`.
+ */
+export function deriveThemeVariant(background: HexColor): ThemeVariant {
+  return relativeLuminance(background) < DARK_LUMINANCE_THRESHOLD ? "dark" : "light";
 }
 
 /**

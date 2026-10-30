@@ -17,6 +17,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DEFAULT_CONFIG_VERSION } from "@/domain/config/config.defaults";
 import { MAX_CONFIG_FILE_BYTES } from "@/domain/config/config.loader";
+import { buildEffectiveConfig } from "@/domain/config/config.validate";
 import { writeTheme } from "@/domain/config/config.writer";
 
 /** Config path used by the cases. */
@@ -153,6 +154,30 @@ describe("writeTheme", () => {
     expect(result.ok).toBe(false);
     expect(result.reason).toContain("not a JSON object");
     expect(written).toEqual([]);
+  });
+
+  it("persists the terminal theme name and validates it back", async () => {
+    const root = await mkdtemp(join(tmpdir(), "gitminal-config-"));
+    const configPath = join(root, "config.json");
+
+    try {
+      const result = await writeTheme("terminal", { configPath });
+
+      expect(result).toEqual({ ok: true });
+
+      const validated = buildEffectiveConfig({
+        rawConfig: JSON.parse(await readFile(configPath, "utf8")),
+        rawKeybindings: null,
+        rawTheme: null,
+        configFileStatus: "loaded",
+      });
+
+      expect(validated.status).toBe("applied");
+      expect(validated.config.theme).toBe("terminal");
+      expect(validated.warnings).toEqual([]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   it("creates a missing configuration directory and leaves no temp file behind", async () => {

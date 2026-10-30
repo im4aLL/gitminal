@@ -1,38 +1,31 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useModalControlCycle } from "@/app/hooks/useModalControlCycle";
-import type {
-  ModalControlResolution,
-  ModalHorizontalInput,
-} from "@/app/hooks/useModalControlCycle.types";
 import { useTheme } from "@/app/hooks/useTheme";
-import { applyThemeCapability } from "@/domain/theme/theme.capability";
-import type { ThemeCatalogue, ThemeCatalogueEntry } from "@/domain/theme/theme.catalogue.types";
-import type { HexColor, ThemeColorCapability } from "@/domain/theme/theme.types";
-import { filterThemeRows } from "@/features/theme-picker/ThemePicker.filter";
-import { INITIAL_CONTROL, PICKER_CONTROLS } from "@/features/theme-picker/useThemePicker.constants";
+import { readHighlightedIndex } from "@/features/theme-picker/ThemePicker.rows";
 import type {
-  ThemePickerControl,
-  ThemePickerFocusZone,
-  ThemePickerRow,
   ThemePickerSearch,
   ThemePickerViewState,
 } from "@/features/theme-picker/useThemePicker.types";
+import { useThemePickerFocus } from "@/features/theme-picker/useThemePickerFocus";
+import { useThemePickerHighlight } from "@/features/theme-picker/useThemePickerHighlight";
+import { useThemePickerRows } from "@/features/theme-picker/useThemePickerRows";
+import { useThemePickerSession } from "@/features/theme-picker/useThemePickerSession";
+import { useThemePickerVariant } from "@/features/theme-picker/useThemePickerVariant";
 import { useThemeCatalogue } from "@/theme/useThemeCatalogue";
 import { useThemeControls } from "@/theme/useThemeControls";
 
 /**
- * Owns the picker's highlight, focus zone, filter, footer cycle, and unmount restore.
+ * Composes the picker's view state from one hook per concern.
  *
- * The highlight is stored by theme name rather than by index, so a filter change keeps the
- * highlighted theme highlighted while it stays visible and falls back to the first match when it does
- * not. The fallback previews that first match, and it never overrides an explicit preview or a
- * restore, because it only runs while the stored highlight is filtered out. The highlight is the live preview: changing it writes the provider through `ThemeControls`, so
- * the picker never re-reads a file. `settle` marks the picker as applied or cancelled, which stops
- * the unmount guard from restoring the previous theme after the user has already chosen one.
+ * The picker's view state is five independent concerns, so each one owns its own hook: the rendered
+ * rows and their filter (`useThemePickerRows`), the highlighted name and its fallback
+ * (`useThemePickerHighlight`), the visible tab (`useThemePickerVariant`), the keyboard zone and its
+ * footer cycle (`useThemePickerFocus`), and the previous-name restore guard
+ * (`useThemePickerSession`). This hook only reads the shared context and composes the pieces, which
+ * keeps each concern's hook small enough to read and leaves one owner per piece of state.
  *
- * Rows come from the provider's theme catalogue rather than the static registry, so a user theme
- * added to that catalogue is listed without a second code path. The built-in catalogue keeps the
- * registry's order, so today's list is unchanged.
+ * The highlight is the live preview: changing it writes the provider through `ThemeControls`, so the
+ * picker never re-reads a file and never persists a preview. Rows come from the provider's theme
+ * catalogue rather than the static registry, so a user theme and the detected Native Terminal entry
+ * are listed without a second code path.
  *
  * @param search - Search state the rows are filtered by and the view renders.
  * @returns The view state the commit and navigation hooks share.
@@ -41,171 +34,34 @@ export function useThemePickerState(search: ThemePickerSearch): ThemePickerViewS
   const theme = useTheme();
   const controls = useThemeControls();
   const catalogue = useThemeCatalogue();
-  const [highlightedName, setHighlightedName] = useState<string>(theme.name);
-  const [focusedZone, setFocusedZone] = useState<ThemePickerFocusZone>("rows");
-  const previousName = useRef<string>(theme.name);
-  const settled = useRef(false);
-  const allRows = useMemo(
-    () => buildRows(catalogue, theme.name, theme.capability),
-    [catalogue, theme.name, theme.capability],
-  );
-  const rows = useMemo(
-    () => filterThemeRows(allRows, search.activeQuery),
-    [allRows, search.activeQuery],
-  );
-  const highlightedIndex = readHighlightedIndex(rows, highlightedName);
-  const cycle = useModalControlCycle<ThemePickerControl>({
-    order: PICKER_CONTROLS,
-    initial: INITIAL_CONTROL,
-    registerVerticalNavigation: false,
-    onHorizontal: (input) =>
-      readHorizontalControl(input, () => {
-        setFocusedZone("actions");
-      }),
+  const tab = useThemePickerVariant(theme.variant);
+  const rows = useThemePickerRows({
+    catalogue,
+    capability: theme.capability,
+    activeName: theme.name,
+    variant: tab.variant,
+    activeQuery: search.activeQuery,
   });
-
-  useEffect(() => {
-    if (rows.some((row) => row.name === highlightedName)) {
-      return;
-    }
-
-    const fallback = rows[0];
-
-    if (fallback === undefined) {
-      return;
-    }
-
-    setHighlightedName(fallback.name);
-    controls.preview(fallback.name);
-  }, [controls, highlightedName, rows]);
-
-  useEffect(
-    () => () => {
-      if (!settled.current) {
-        controls.restore(previousName.current);
-      }
-    },
-    [controls],
-  );
-
-  /** Marks the picker as settled so the unmount guard stops restoring the previous theme. */
-  const settle = useCallback((): void => {
-    settled.current = true;
-  }, []);
+  const highlight = useThemePickerHighlight({ rows, initialName: theme.name, controls });
+  const session = useThemePickerSession({ themeName: theme.name, controls });
+  const focus = useThemePickerFocus();
 
   return {
     theme,
     controls,
     rows,
-    highlightedIndex,
-    setHighlightedName,
-    focusedZone,
-    setFocusedZone,
-    cycle,
-    previousName: previousName.current,
+    highlightedIndex: readHighlightedIndex(rows, highlight.highlightedName),
+    setHighlightedName: highlight.setHighlightedName,
+    variant: tab.variant,
+    selectVariant: tab.selectVariant,
+    selectAdjacentVariant: tab.selectAdjacentVariant,
+    focusRows: focus.focusRows,
+    focusedZone: focus.focusedZone,
+    setFocusedZone: focus.setFocusedZone,
+    cycle: focus.cycle,
+    previousName: session.previousName,
     query: search.query,
     setQuery: search.setQuery,
-    settle,
+    settle: session.settle,
   };
-}
-
-/**
- * Applies the picker's Left and Right rule.
- *
- * Left moves from Apply to Cancel and right moves back, which is the only horizontal choice in a
- * two-action footer. A horizontal step means the footer now owns focus, so the caller moves the focus
- * zone before the control changes.
- *
- * @param input - Focused control and requested direction.
- * @param onFocusActions - Callback that moves keyboard focus into the footer actions.
- * @returns The control to focus next.
- */
-function readHorizontalControl(
-  input: ModalHorizontalInput<ThemePickerControl>,
-  onFocusActions: () => void,
-): ModalControlResolution<ThemePickerControl> {
-  onFocusActions();
-
-  return {
-    kind: "focus",
-    control: input.direction === "left" ? "cancel" : "apply",
-  };
-}
-
-/**
- * Builds every picker row for the active theme name and capability.
- *
- * The swatch fill comes from the capability-mapped tokens, so a 256-color terminal previews the
- * quantized color the app would actually render instead of the raw truecolor value. A monochrome
- * terminal has no swatch fill, so the row falls back to the plain marker from `Swatch` and the name,
- * variant label, and active marker carry all meaning.
- *
- * @param catalogue - Catalogue that owns the row identities and their order.
- * @param activeName - Theme currently rendered, including a live preview.
- * @param capability - Terminal capability that decides the final swatch color.
- * @returns The rows in catalogue order.
- */
-function buildRows(
-  catalogue: ThemeCatalogue,
-  activeName: string,
-  capability: ThemeColorCapability,
-): readonly ThemePickerRow[] {
-  return Object.freeze(
-    catalogue.entries.map((entry) => ({
-      name: entry.name,
-      label: entry.label,
-      variant: entry.variant,
-      active: entry.name === activeName,
-      swatchColor: readSwatchColor(entry, capability),
-    })),
-  );
-}
-
-/**
- * Reads one theme's swatch fill for the current capability.
- *
- * The theme is mapped through the same capability stage the provider uses, so the picker never shows
- * a color the rest of the app would not render. Monochrome keeps the marker path instead.
- *
- * @param entry - Catalogue entry whose background is previewed.
- * @param capability - Terminal capability.
- * @returns The mapped fill color, or `null` when the marker replaces the swatch.
- */
-function readSwatchColor(
-  entry: ThemeCatalogueEntry,
-  capability: ThemeColorCapability,
-): HexColor | null {
-  if (capability === "monochrome") {
-    return null;
-  }
-
-  const mapped = applyThemeCapability(
-    {
-      name: entry.name,
-      label: entry.label,
-      variant: entry.variant,
-      tokens: entry.tokens,
-      capability: "truecolor",
-      warnings: [],
-    },
-    capability,
-  );
-
-  return mapped.tokens.background;
-}
-
-/**
- * Reads the filtered index of the highlighted theme.
- *
- * A highlighted theme that the current filter hides falls back to the first match, which keeps the
- * highlight, the live preview, and the applied row in agreement.
- *
- * @param rows - Filtered rows in catalogue order.
- * @param highlightedName - Theme name the highlight is stored under.
- * @returns The index to render as highlighted, or zero when no row matches.
- */
-function readHighlightedIndex(rows: readonly ThemePickerRow[], highlightedName: string): number {
-  const index = rows.findIndex((row) => row.name === highlightedName);
-
-  return index === -1 ? 0 : index;
 }

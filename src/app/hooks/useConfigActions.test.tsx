@@ -13,6 +13,7 @@ import type { TransientStatus } from "@/app/providers/StatusProvider.types";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { DEFAULT_CONFIG, UNRESOLVED_CONFIG_PATHS } from "@/domain/config/config.defaults";
 import type { GitminalConfig } from "@/domain/config/config.types";
+import { createBuiltInCatalogue } from "@/domain/theme/theme.catalogue";
 
 /** Latest status and console values captured by the probe. */
 let latestStatus: ReturnType<typeof useStatus> | undefined;
@@ -33,6 +34,7 @@ function snapshot(overrides: Partial<ConfigSnapshot> = {}): ConfigSnapshot {
     warnings: [],
     keybindingsFile: {},
     themeOverrides: null,
+    catalogue: createBuiltInCatalogue(),
     ...overrides,
   };
 }

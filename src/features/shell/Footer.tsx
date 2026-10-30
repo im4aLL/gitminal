@@ -192,6 +192,10 @@ function resolveRemoteHintTarget(
 /**
  * Builds the modal footer hints from effective bindings and catalogue labels.
  *
+ * Every effective binding of an action is shown, joined with `/`, so a modal whose movement keys
+ * accept both an arrow and a letter advertises both instead of hiding the letter behind Help. A hint
+ * is skipped when its action has no binding or no registered handler in the modal scope.
+ *
  * @param keymap - The resolved keymap.
  * @param isAvailable - Availability predicate for a registered handler.
  * @returns The modal hints that have a binding and a registered handler.
@@ -201,12 +205,21 @@ function buildModalHints(
   isAvailable: (actionId: string, scope: ActionScope) => boolean,
 ): readonly { readonly key: string; readonly label: string }[] {
   return MODAL_HINT_ACTIONS.flatMap((hint) => {
-    const binding = keymap.bindings.get(hint.actionId)?.[0];
+    const bindings = keymap.bindings.get(hint.actionId);
 
-    if (binding === undefined || !isAvailable(hint.actionId, hint.scope)) {
+    if (bindings === undefined || bindings.length === 0) {
       return [];
     }
 
-    return [{ key: formatBinding(binding), label: ACTION_BY_ID[hint.actionId].label }];
+    if (!isAvailable(hint.actionId, hint.scope)) {
+      return [];
+    }
+
+    return [
+      {
+        key: bindings.map(formatBinding).join("/"),
+        label: ACTION_BY_ID[hint.actionId].label,
+      },
+    ];
   });
 }

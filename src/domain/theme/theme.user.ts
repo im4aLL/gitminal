@@ -1,9 +1,10 @@
 import { isPlainObject } from "@/lib/object";
 import { getCatalogueEntry } from "./theme.catalogue";
 import type { ThemeCatalogue } from "./theme.catalogue.types";
-import { contrastRatio, relativeLuminance } from "./theme.contrast";
+import { contrastRatio, deriveThemeVariant } from "./theme.contrast";
 import { isSupportedThemeVersion, readThemeColorMap } from "./theme.override";
 import { getThemeDefinition } from "./theme.registry";
+import { isReservedThemeName, TERMINAL_EXPORT_NAME } from "./theme.terminal";
 import type { ThemeDefinition, ThemeTokens, ThemeVariant } from "./theme.types";
 import {
   mergeWithBase,
@@ -19,8 +20,8 @@ const THEME_NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 /** Longest accepted theme name. */
 const MAX_THEME_NAME_LENGTH = 64;
 
-/** Background luminance below this value derives a dark variant, otherwise light. */
-const DARK_LUMINANCE_THRESHOLD = 0.5;
+/** Suffix appended to a built-in theme name when it is exported to a theme file. */
+const EXPORTED_THEME_SUFFIX = "-custom";
 
 /** WCAG AA body-text contrast floor used for the one reported contrast warning. */
 const MIN_TEXT_CONTRAST = 4.5;
@@ -159,18 +160,38 @@ function readIdentity(
 }
 
 /**
+ * Reads the identity a theme is exported under.
+ *
+ * A theme file may not shadow a built-in, and `terminal` is reserved for the detected entry, so an
+ * export of either kind needs a free identity. Native Terminal becomes `native-terminal` and a
+ * built-in gains the `-custom` suffix, which keeps an exported palette valid without changing the
+ * identity the file describes.
+ *
+ * @param name - Theme name being exported.
+ * @returns The identity to write into the user theme file.
+ */
+export function readExportName(name: string): string {
+  if (isReservedThemeName(name)) {
+    return TERMINAL_EXPORT_NAME;
+  }
+
+  return getThemeDefinition(name) === undefined ? name : `${name}${EXPORTED_THEME_SUFFIX}`;
+}
+
+/**
  * Reports whether a theme name is already registered.
  *
  * Built-in names are checked against the registry directly so a caller cannot bypass the collision
- * invariant with a catalogue that omits them. A supplied catalogue adds the user entries loaded
- * before this file.
+ * invariant with a catalogue that omits them. The detected Native Terminal identity is reserved the
+ * same way, because the pseudo-theme occupies that name whenever the terminal answers. A supplied
+ * catalogue adds the user entries loaded before this file.
  *
  * @param catalogue - Catalogue of already registered user themes, if any.
  * @param name - Candidate theme name.
  * @returns True when the name may not be reused.
  */
 function isRegisteredThemeName(catalogue: ThemeCatalogue | undefined, name: string): boolean {
-  if (getThemeDefinition(name) !== undefined) {
+  if (getThemeDefinition(name) !== undefined || isReservedThemeName(name)) {
     return true;
   }
 
@@ -180,10 +201,13 @@ function isRegisteredThemeName(catalogue: ThemeCatalogue | undefined, name: stri
 /**
  * Reports whether a theme name follows the documented identity rule.
  *
+ * The same rule validates a theme file and the identity a user theme is exported under, so a name the
+ * writer accepted is always a name the reader accepts.
+ *
  * @param name - Trimmed theme name.
  * @returns True for one to 64 characters matching `/^[a-z0-9][a-z0-9-]*$/`.
  */
-function isValidThemeName(name: string): boolean {
+export function isValidThemeName(name: string): boolean {
   return name.length > 0 && name.length <= MAX_THEME_NAME_LENGTH && THEME_NAME_PATTERN.test(name);
 }
 
@@ -260,9 +284,9 @@ function readBase(
 /**
  * Resolves the theme variant.
  *
- * An explicit `dark` or `light` wins. Otherwise the relative luminance of the resolved `background`
- * decides: below 0.5 is dark, otherwise light. Any other non-null value warns and is derived the
- * same way, so a typo cannot register a variant the rest of the app would not render.
+ * An explicit `dark` or `light` wins. Otherwise the background luminance decides, through the shared
+ * variant rule in `theme.contrast.ts`. Any other non-null value warns and is derived the same way, so
+ * a typo cannot register a variant the rest of the app would not render.
  *
  * @param raw - Raw `variant` value.
  * @param name - Theme identity used in warnings.
@@ -284,7 +308,7 @@ function readVariant(
     warnings.push(`Invalid "variant" in theme "${name}"; it was derived from the background.`);
   }
 
-  return relativeLuminance(tokens.background) < DARK_LUMINANCE_THRESHOLD ? "dark" : "light";
+  return deriveThemeVariant(tokens.background);
 }
 
 /**

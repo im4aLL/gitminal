@@ -33,6 +33,7 @@ import {
   detectRepositoryState,
 } from "@/domain/repository/repository.states";
 import type { RepositorySignals } from "@/domain/repository/repository.types";
+import { createBuiltInCatalogue } from "@/domain/theme/theme.catalogue";
 import { DEFAULT_THEME_NAME, THEMES } from "@/domain/theme/theme.registry";
 import { TopBar } from "@/features/top-bar/TopBar";
 import { TopBarActions } from "@/features/top-bar/TopBarActions";
@@ -64,6 +65,7 @@ const FETCH_SCOPE_PATHS: ConfigFilePaths = Object.freeze({
   config: "/cfg/config.json",
   keybindings: "/cfg/keybindings.json",
   theme: "/cfg/theme.json",
+  themesDir: "/cfg/themes",
 });
 
 /** The global remote actions the top bar owns. */
@@ -241,6 +243,7 @@ function buildFetchScopeSnapshot(scope: RemoteFetchScope): ConfigSnapshot {
     warnings: [],
     keybindingsFile: {},
     themeOverrides: null,
+    catalogue: createBuiltInCatalogue(),
   };
 }
 

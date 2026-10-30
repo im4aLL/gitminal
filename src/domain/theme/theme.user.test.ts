@@ -12,7 +12,7 @@ import { resolveTheme } from "@/domain/theme/theme.resolve";
 import type { ThemeToken } from "@/domain/theme/theme.tokens";
 import { THEME_TOKEN_NAMES } from "@/domain/theme/theme.tokens";
 import type { HexColor, ResolvedTheme } from "@/domain/theme/theme.types";
-import { readUserTheme } from "@/domain/theme/theme.user";
+import { readExportName, readUserTheme } from "@/domain/theme/theme.user";
 import type { UserThemeDefinition } from "@/domain/theme/theme.user.types";
 
 /** Prefix kept outside the string so colours are not written as hex literals. */
@@ -602,6 +602,14 @@ describe("readUserTheme catalogue resolution", () => {
     expect(theme.tokens.accent).toBe(accent);
     expect(theme.tokens.graph).toEqual(baseTokens().graph);
     expect(theme.warnings).toEqual([]);
+  });
+});
+
+describe("readExportName", () => {
+  it("keeps a free identity and derives one that cannot shadow", () => {
+    expect(readExportName("hadi-ink")).toBe("hadi-ink");
+    expect(readExportName("nord")).toBe("nord-custom");
+    expect(readExportName("terminal")).toBe("native-terminal");
   });
 });
 

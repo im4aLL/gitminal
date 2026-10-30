@@ -85,21 +85,28 @@ export const SELECTION_HINT_ACTIONS: ReadonlySet<string> = Object.freeze(new Set
 /**
  * Actions the footer advertises while a modal owns the keyboard.
  *
- * Labels come from the action catalogue so help, the palette, and the footer stay aligned. The
- * list only chooses which actions and scopes are modal-relevant. `focus.next` is deliberately absent:
- * the palette renders its own field-traversal hint inside the modal, and every other modal has no
- * such cycle to advertise.
+ * Labels come from the action catalogue so help, the palette, and the footer stay aligned, and every
+ * effective binding is shown for a hint so a modal that accepts both arrows and letters advertises
+ * both. The list only chooses which actions and scopes are modal-relevant. `focus.next` is
+ * deliberately absent: the palette renders its own field-traversal hint inside the modal, and every
+ * other modal has no such cycle to advertise. Esc is ranked second so it survives width shrinking,
+ * and the three `theme.*` actions plus `overlay.search` appear only while their owner (the theme
+ * picker) has registered overlay handlers.
  */
 export const MODAL_HINT_ACTIONS: readonly {
   readonly actionId: ActionId;
   readonly scope: ActionScope;
 }[] = Object.freeze([
   { actionId: "nav.activate", scope: "overlay" },
+  { actionId: "overlay.close", scope: "global" },
   { actionId: "nav.up", scope: "overlay" },
   { actionId: "nav.down", scope: "overlay" },
-  { actionId: "nav.pageUp", scope: "overlay" },
-  { actionId: "nav.pageDown", scope: "overlay" },
   { actionId: "nav.left", scope: "overlay" },
   { actionId: "nav.right", scope: "overlay" },
-  { actionId: "overlay.close", scope: "global" },
+  { actionId: "theme.tabLeft", scope: "overlay" },
+  { actionId: "theme.tabRight", scope: "overlay" },
+  { actionId: "theme.export", scope: "overlay" },
+  { actionId: "overlay.search", scope: "overlay" },
+  { actionId: "nav.pageUp", scope: "overlay" },
+  { actionId: "nav.pageDown", scope: "overlay" },
 ]);
