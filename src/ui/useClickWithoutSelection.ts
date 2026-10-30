@@ -1,3 +1,4 @@
+import type { MouseEvent } from "@opentui/core";
 import { useRenderer } from "@opentui/react";
 import { useCallback, useRef } from "react";
 
@@ -11,19 +12,26 @@ import { useCallback, useRef } from "react";
  * prevent the selection from starting. Clearing it here runs before the owning action and before
  * the next frame, so the label is never painted selected, while text outside a clickable primitive
  * stays selectable for copy. The handler is always attached, including for an inert control,
- * because the selection starts before the action would be skipped.
+ * because the selection starts before the action would be skipped. The mouse event is forwarded to
+ * the owning action, so a nested click target can stop propagation before an enclosing row handles
+ * the same click.
  *
  * @param onMouseDown - Owning feature's click action, or undefined for an inert control.
  * @returns The mouse-down handler for the primitive's clickable box.
  */
-export function useClickWithoutSelection(onMouseDown?: () => void): () => void {
+export function useClickWithoutSelection(
+  onMouseDown?: (event: MouseEvent) => void,
+): (event: MouseEvent) => void {
   const renderer = useRenderer();
   const action = useRef(onMouseDown);
 
   action.current = onMouseDown;
 
-  return useCallback((): void => {
-    renderer.clearSelection();
-    action.current?.();
-  }, [renderer]);
+  return useCallback(
+    (event: MouseEvent): void => {
+      renderer.clearSelection();
+      action.current?.(event);
+    },
+    [renderer],
+  );
 }

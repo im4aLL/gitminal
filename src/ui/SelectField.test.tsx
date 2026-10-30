@@ -75,4 +75,32 @@ describe("SelectField", () => {
       await setup.dispose();
     });
   });
+
+  it("marks a list that outgrows its viewport with the scroll indicator", async () => {
+    const options = Array.from({ length: 6 }, (_, index) => ({
+      label: `Option ${index}`,
+      value: `option-${index}`,
+    }));
+    const setup = await testRender(
+      <ShellTestProviders>
+        <box flexDirection="column" width={40} height={4}>
+          <SelectField id="scope" options={options} height={4} />
+        </box>
+      </ShellTestProviders>,
+      { width: 40, height: 4 },
+    );
+
+    await act(async () => {
+      await setup.renderOnce();
+    });
+
+    const select = setup.renderer.root.findDescendantById("scope") as SelectRenderable | undefined;
+
+    expect(select?.showScrollIndicator).toBe(true);
+    expect(select?.options.length).toBeGreaterThan(2);
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
 });

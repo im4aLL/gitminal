@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { MouseEvent } from "@opentui/core";
 import { testRender } from "@opentui/react/test-utils";
 import { act } from "react";
 import type { DiffFileView, DiffSectionView } from "@/domain/repository/repository.types";
@@ -65,6 +66,12 @@ function actions(disabled: boolean): readonly DiffActionView[] {
   ];
 }
 
+/** Column of the section title that the single-click tests press. */
+const SECTION_TITLE_CLICK_X = 2;
+
+/** Row of the section title that the single-click tests press. */
+const SECTION_TITLE_CLICK_Y = 0;
+
 /**
  * Renders one section.
  *
@@ -72,6 +79,7 @@ function actions(disabled: boolean): readonly DiffActionView[] {
  * @param width - Container width.
  * @param terminalWidth - Terminal width.
  * @param bulkActions - Bulk actions.
+ * @param handlers - Section callbacks exercised by a test.
  * @returns The renderer setup.
  */
 async function renderSection(
@@ -79,6 +87,7 @@ async function renderSection(
   width: number,
   terminalWidth: number,
   bulkActions: readonly DiffActionView[],
+  handlers: { readonly onToggle?: () => void; readonly onMouseDown?: () => void } = {},
 ): Promise<Awaited<ReturnType<typeof testRender>>> {
   const setup = await testRender(
     <ShellTestProviders>
@@ -91,8 +100,8 @@ async function renderSection(
           focused={false}
           emptyText="No untracked files"
           bulkActions={bulkActions}
-          onToggle={() => {}}
-          onMouseDown={() => {}}
+          onToggle={handlers.onToggle ?? (() => {})}
+          onMouseDown={handlers.onMouseDown ?? (() => {})}
           renderFile={() => null}
         />
       </box>
@@ -105,6 +114,30 @@ async function renderSection(
   });
 
   return setup;
+}
+
+/**
+ * Dispatches a mouse-down event to one rendered box.
+ *
+ * @param setup - Renderer setup.
+ * @param id - Renderable id.
+ */
+function clickById(setup: Awaited<ReturnType<typeof testRender>>, id: string): void {
+  const box = setup.renderer.root.findDescendantById(id);
+
+  if (box === undefined) {
+    throw new Error(`box ${id} is missing`);
+  }
+
+  box.processMouseEvent(
+    new MouseEvent(box, {
+      type: "down",
+      button: 0,
+      x: 0,
+      y: 0,
+      modifiers: { shift: false, alt: false, ctrl: false },
+    }),
+  );
 }
 
 describe("DiffSection", () => {
@@ -171,6 +204,50 @@ describe("DiffSection", () => {
 
     await act(async () => {
       await wrapped.dispose();
+    });
+  });
+
+  it("toggles and selects the section from one click on the title", async () => {
+    let toggles = 0;
+    let selections = 0;
+    const setup = await renderSection(section([file()]), 80, 80, actions(false), {
+      onToggle: () => {
+        toggles += 1;
+      },
+      onMouseDown: () => {
+        selections += 1;
+      },
+    });
+
+    await act(async () => {
+      await setup.mockMouse.click(SECTION_TITLE_CLICK_X, SECTION_TITLE_CLICK_Y);
+    });
+
+    expect(toggles).toBe(1);
+    expect(selections).toBe(1);
+    expect(setup.renderer.hasSelection).toBe(false);
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("does not toggle the section when a bulk action is pressed", async () => {
+    let toggles = 0;
+    const setup = await renderSection(section([file()]), 80, 80, actions(false), {
+      onToggle: () => {
+        toggles += 1;
+      },
+    });
+
+    await act(async () => {
+      clickById(setup, "section::untracked::diff.stageAll");
+    });
+
+    expect(toggles).toBe(0);
+
+    await act(async () => {
+      await setup.dispose();
     });
   });
 });

@@ -75,7 +75,7 @@ export function ThemePickerTabs(props: {
       textColor={props.focused ? tokens.text : tokens.muted}
       selectedBackgroundColor={tokens.selection}
       selectedTextColor={tokens.text}
-      selectedDescriptionColor={tokens.muted}
+      selectedDescriptionColor={tokens.diffContext}
       onChange={(index) => {
         props.onSelect(readTabVariant(index));
       }}

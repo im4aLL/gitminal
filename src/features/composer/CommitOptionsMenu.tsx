@@ -158,8 +158,8 @@ export function CommitOptionsMenu(props: CommitOptionsMenuProps): ReactNode {
         focusedTextColor={tokens.text}
         selectedBackgroundColor={tokens.selection}
         selectedTextColor={tokens.text}
-        descriptionColor={tokens.dim}
-        selectedDescriptionColor={tokens.muted}
+        descriptionColor={tokens.diffContext}
+        selectedDescriptionColor={tokens.diffContext}
         showDescription={false}
         wrapSelection={false}
         onChange={(index) => {

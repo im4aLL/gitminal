@@ -113,11 +113,11 @@ describe("MoreMenu", () => {
 
     expect(selectedName.fg.equals(RGBA.fromHex(tokens.text))).toBe(true);
     expect(selectedName.bg.equals(RGBA.fromHex(tokens.selection))).toBe(true);
-    expect(selectedDescription.fg.equals(RGBA.fromHex(tokens.muted))).toBe(true);
+    expect(selectedDescription.fg.equals(RGBA.fromHex(tokens.diffContext))).toBe(true);
     expect(selectedDescription.bg.equals(RGBA.fromHex(tokens.selection))).toBe(true);
     expect(plainName.fg.equals(RGBA.fromHex(tokens.text))).toBe(true);
     expect(plainName.bg.equals(RGBA.fromHex(tokens.surface))).toBe(true);
-    expect(plainDescription.fg.equals(RGBA.fromHex(tokens.dim))).toBe(true);
+    expect(plainDescription.fg.equals(RGBA.fromHex(tokens.diffContext))).toBe(true);
     expect(plainDescription.bg.equals(RGBA.fromHex(tokens.surface))).toBe(true);
 
     await act(async () => {

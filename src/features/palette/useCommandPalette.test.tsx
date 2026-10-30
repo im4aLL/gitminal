@@ -21,7 +21,6 @@ import {
   PALETTE_MAX_OPTION_ROWS,
   PALETTE_MIN_OPTION_ROWS,
 } from "@/features/palette/CommandPalette.constants";
-import { decodePaletteValue } from "@/features/palette/CommandRow";
 import {
   readRecentCommandIds,
   recordRecentCommand,
@@ -240,7 +239,7 @@ async function renderPalette(
     { width: 100, height: 30 },
   );
 
-  await waitFor(setup, () => latestPalette !== undefined && latestPalette.options.length > 0);
+  await waitFor(setup, () => latestPalette !== undefined && latestPalette.rows.length > 0);
 
   return setup;
 }
@@ -251,11 +250,21 @@ async function renderPalette(
  * @returns Command ids in render order, excluding group headers.
  */
 function readCommandIds(): readonly string[] {
-  return (latestPalette?.options ?? []).flatMap((option) => {
-    const decoded = decodePaletteValue(option.value);
+  return (latestPalette?.rows ?? []).flatMap((row) =>
+    row.kind === "command" ? [row.commandId] : [],
+  );
+}
 
-    return decoded?.kind === "command" ? [decoded.commandId] : [];
-  });
+/**
+ * Reads the rendered index of one command row.
+ *
+ * @param commandId - Command to look up.
+ * @returns The row index, or -1 when the command is not rendered.
+ */
+function readRowIndex(commandId: string): number {
+  return (latestPalette?.rows ?? []).findIndex(
+    (row) => row.kind === "command" && row.commandId === commandId,
+  );
 }
 
 /**
@@ -265,11 +274,9 @@ function readCommandIds(): readonly string[] {
  * @returns The encoded target, or undefined when the command is not rendered.
  */
 function readTarget(commandId: string) {
-  for (const option of latestPalette?.options ?? []) {
-    const decoded = decodePaletteValue(option.value);
-
-    if (decoded?.kind === "command" && decoded.commandId === commandId) {
-      return decoded.target;
+  for (const row of latestPalette?.rows ?? []) {
+    if (row.kind === "command" && row.commandId === commandId) {
+      return row.target;
     }
   }
 
@@ -283,11 +290,9 @@ function readTarget(commandId: string) {
  * @returns The option, or undefined when the command is not rendered.
  */
 function readOption(commandId: string) {
-  return (latestPalette?.options ?? []).find((option) => {
-    const decoded = decodePaletteValue(option.value);
-
-    return decoded?.kind === "command" && decoded.commandId === commandId;
-  });
+  return (latestPalette?.rows ?? []).find(
+    (row) => row.kind === "command" && row.commandId === commandId,
+  );
 }
 
 /**
@@ -325,22 +330,20 @@ async function setQuery(
  * @param repository - Repository context the palette rendered against.
  */
 function expectDisabledReasons(repository: ReturnType<typeof useRepository>): void {
-  for (const candidate of latestPalette?.options ?? []) {
-    const decoded = decodePaletteValue(candidate.value);
-
-    if (decoded?.kind !== "command") {
+  for (const candidate of latestPalette?.rows ?? []) {
+    if (candidate.kind !== "command") {
       continue;
     }
 
-    const descriptor = getCommandDescriptor(decoded.commandId);
+    const descriptor = getCommandDescriptor(candidate.commandId);
 
     if (descriptor === undefined) {
       continue;
     }
 
     const availability = repository.getAvailability(
-      decoded.commandId,
-      decoded.target,
+      candidate.commandId,
+      candidate.target,
       availabilityRegion(descriptor.scope),
     );
 
@@ -348,7 +351,7 @@ function expectDisabledReasons(repository: ReturnType<typeof useRepository>): vo
       continue;
     }
 
-    expect(candidate.description, decoded.commandId).toBe(
+    expect(candidate.description, candidate.commandId).toBe(
       describeCommandReason(availability.reason ?? "command-not-implemented"),
     );
   }
@@ -412,8 +415,10 @@ describe("useCommandPalette capture", () => {
     const option = readOption("branch.delete");
     const repository = latestRepository;
 
-    expect(option).toBeDefined();
-    expect(option?.description).toBe(describeCommandReason("missing-target"));
+    expect(option?.kind).toBe("command");
+    expect(option?.kind === "command" ? option.description : "").toBe(
+      describeCommandReason("missing-target"),
+    );
     expect(repository).toBeDefined();
 
     if (repository !== undefined) {
@@ -478,11 +483,13 @@ describe("useCommandPalette dispatch", () => {
       { width: 100, height: 30 },
     );
 
-    await waitFor(setup, () => latestPalette !== undefined && latestPalette.options.length > 0);
+    await waitFor(setup, () => latestPalette !== undefined && latestPalette.rows.length > 0);
 
     const option = readOption("remote.fetch:origin");
 
-    expect(option?.description).toBe(describeCommandReason("operation-in-progress"));
+    expect(option?.kind === "command" ? option.description : "").toBe(
+      describeCommandReason("operation-in-progress"),
+    );
 
     settleExecution({
       commandId: "remote.fetch",
@@ -495,7 +502,7 @@ describe("useCommandPalette dispatch", () => {
     clearCommandExecution(execution);
 
     await act(async () => {
-      latestPalette?.selectValue(option?.value ?? "");
+      latestPalette?.activateRow(readRowIndex("remote.fetch:origin"));
       await setup.renderOnce();
     });
 
@@ -542,7 +549,7 @@ describe("useCommandPalette dispatch", () => {
       await setup.renderOnce();
     });
 
-    await waitFor(setup, () => latestPalette !== undefined && latestPalette.options.length > 0);
+    await waitFor(setup, () => latestPalette !== undefined && latestPalette.rows.length > 0);
 
     const option = readOption("graph.search");
 
@@ -552,7 +559,7 @@ describe("useCommandPalette dispatch", () => {
     // close completion before it can dispatch. Only this same-batch window is reachable from the
     // harness; the acknowledged-then-open interleaving is argued in the overlay contract.
     await act(async () => {
-      latestPalette?.selectValue(option?.value ?? "");
+      latestPalette?.activateRow(readRowIndex("graph.search"));
       readLatestOverlay()?.showError({
         commandId: "remote.fetch",
         operationLabel: "Fetch",
@@ -600,14 +607,14 @@ describe("useCommandPalette dispatch", () => {
       { width: 100, height: 30 },
     );
 
-    await waitFor(setup, () => latestPalette !== undefined && latestPalette.options.length > 0);
+    await waitFor(setup, () => latestPalette !== undefined && latestPalette.rows.length > 0);
 
     const option = readOption("graph.search");
 
     expect(option).toBeDefined();
 
     await act(async () => {
-      latestPalette?.selectValue(option?.value ?? "");
+      latestPalette?.activateRow(readRowIndex("graph.search"));
       await setup.renderOnce();
     });
 
@@ -660,7 +667,7 @@ describe("useCommandPalette filtering", () => {
     await setQuery(setup, "nothing-matches-this");
 
     expect(latestPalette?.matchCount).toBe(0);
-    expect(latestPalette?.options).toHaveLength(0);
+    expect(latestPalette?.rows).toHaveLength(0);
 
     await act(async () => {
       await setup.dispose();
@@ -728,11 +735,16 @@ describe("session recents", () => {
     recordRecentCommand("app.refresh");
 
     const setup = await renderPalette();
-    const options = latestPalette?.options ?? [];
+    const rows = latestPalette?.rows ?? [];
 
-    expect(options[0]?.name).toBe("-- Recent --");
-    expect(options[1]?.name.startsWith("Recent: Refresh")).toBeTrue();
-    expect(options.some((option) => option.name === "-- App --")).toBeTrue();
+    expect(rows[0]).toMatchObject({ kind: "header", category: "recent", label: "Recent" });
+    expect(rows[1]?.kind).toBe("command");
+    expect(rows[1]?.kind === "command" ? rows[1].commandId : "").toBe("app.refresh");
+
+    const appHeaderIndex = rows.findIndex((row) => row.kind === "header" && row.label === "App");
+
+    expect(appHeaderIndex).toBeGreaterThan(0);
+    expect(rows[appHeaderIndex - 1]).toEqual({ kind: "spacer", category: "app" });
 
     await act(async () => {
       await setup.dispose();

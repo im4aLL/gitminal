@@ -9,10 +9,4 @@ export interface PaletteDispatch {
    * @param selectableIndex - Highlighted row index.
    */
   readonly activate: (rows: readonly PaletteRow[], selectableIndex: number) => void;
-  /**
-   * Activates the option value reported by the native select.
-   *
-   * @param value - Encoded option value.
-   */
-  readonly selectValue: (value: string) => void;
 }

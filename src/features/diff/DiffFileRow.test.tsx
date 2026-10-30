@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { MouseEvent } from "@opentui/core";
 import { testRender } from "@opentui/react/test-utils";
 import { act } from "react";
 import type { DiffFileView, DiffStatusLetter } from "@/domain/repository/repository.types";
@@ -25,11 +26,44 @@ function file(overrides: Partial<DiffFileView> = {}): DiffFileView {
   };
 }
 
+/** Column of the expand indicator that the single-click tests press. */
+const INDICATOR_CLICK_X = 0;
+
+/** Column of the path text that the single-click tests press. */
+const PATH_CLICK_X = 4;
+
+/** Row of the only interactive row that the single-click tests press. */
+const ROW_CLICK_Y = 0;
+
+/**
+ * Dispatches a mouse-down event to one rendered box.
+ *
+ * @param setup - Renderer setup.
+ * @param id - Renderable id.
+ */
+function clickById(setup: Awaited<ReturnType<typeof testRender>>, id: string): void {
+  const box = setup.renderer.root.findDescendantById(id);
+
+  if (box === undefined) {
+    throw new Error(`box ${id} is missing`);
+  }
+
+  box.processMouseEvent(
+    new MouseEvent(box, {
+      type: "down",
+      button: 0,
+      x: 0,
+      y: 0,
+      modifiers: { shift: false, alt: false, ctrl: false },
+    }),
+  );
+}
+
 /**
  * Renders one row inside the provider stack.
  *
  * @param view - Row model.
- * @param options - Expansion, counts, actions, and width.
+ * @param options - Expansion, counts, actions, width, and row callbacks.
  * @returns The renderer setup.
  */
 async function renderRow(
@@ -46,6 +80,8 @@ async function renderRow(
     }[];
     readonly width?: number;
     readonly terminalWidth?: number;
+    readonly onToggle?: () => void;
+    readonly onMouseDown?: () => void;
   } = {},
 ): Promise<Awaited<ReturnType<typeof testRender>>> {
   const width = options.width ?? 70;
@@ -61,8 +97,8 @@ async function renderRow(
           expanded={options.expanded ?? false}
           counts={options.counts ?? null}
           actions={options.actions ?? []}
-          onToggle={() => {}}
-          onMouseDown={() => {}}
+          onToggle={options.onToggle ?? (() => {})}
+          onMouseDown={options.onMouseDown ?? (() => {})}
         />
       </box>
     </ShellTestProviders>,
@@ -180,6 +216,59 @@ describe("DiffFileRow", () => {
     expect(firstLine).toContain("...");
     expect(firstLine).toContain("M");
     expect(firstLine).toContain("+12 -3");
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("toggles and selects the file from one click on the indicator or the path", async () => {
+    let toggles = 0;
+    let selections = 0;
+    const setup = await renderRow(file(), {
+      onToggle: () => {
+        toggles += 1;
+      },
+      onMouseDown: () => {
+        selections += 1;
+      },
+    });
+
+    await act(async () => {
+      await setup.mockMouse.click(INDICATOR_CLICK_X, ROW_CLICK_Y);
+      await setup.mockMouse.click(PATH_CLICK_X, ROW_CLICK_Y);
+    });
+
+    expect(toggles).toBe(2);
+    expect(selections).toBe(2);
+    expect(setup.renderer.hasSelection).toBe(false);
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("does not toggle the file when an inline action is pressed", async () => {
+    let toggles = 0;
+    const setup = await renderRow(file(), {
+      actions: [
+        {
+          id: "diff.stage",
+          label: "Stage",
+          disabled: false,
+          onPress: () => {},
+        },
+      ],
+      onToggle: () => {
+        toggles += 1;
+      },
+    });
+
+    await act(async () => {
+      clickById(setup, "working::src/app.ts::diff.stage");
+    });
+
+    expect(toggles).toBe(0);
 
     await act(async () => {
       await setup.dispose();

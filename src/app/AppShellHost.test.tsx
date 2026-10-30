@@ -28,7 +28,6 @@ import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { describeCommandReason } from "@/domain/commands/commands.reasons";
 import { listCommandDescriptors } from "@/domain/commands/commands.registry";
 import { resetCommandRunner } from "@/domain/commands/commands.runner";
-import type { CommandTarget } from "@/domain/commands/commands.types";
 import { buildListRemoteBranchesArgs } from "@/domain/git/git.remote-branches";
 import { buildListLocalTagsArgs, buildLsRemoteTagsArgs } from "@/domain/git/git.tags";
 import type { GitClient, GitInvocationResult } from "@/domain/git/git.types";
@@ -40,8 +39,11 @@ import {
 } from "@/features/composer/composer.constants";
 import { GRAPH_SEARCH_INPUT_ID } from "@/features/graph/graph.constants";
 import { HELP_MODAL_ID } from "@/features/help/HelpModal.constants";
-import { PALETTE_SELECT_ID } from "@/features/palette/CommandPalette.constants";
-import { decodePaletteValue } from "@/features/palette/CommandRow";
+import {
+  PALETTE_LIST_ID,
+  PALETTE_ROW_ID_PREFIX,
+  PALETTE_SEARCH_INPUT_ID,
+} from "@/features/palette/CommandPalette.constants";
 import { readRecentCommandIds, resetRecentCommands } from "@/features/palette/palette.search";
 import type { FocusContextValue } from "@/features/shell/focus.types";
 import { FOCUS_ACTION_BY_REGION, SIDEBAR_SWITCHER_ID } from "@/features/shell/regions";
@@ -696,11 +698,6 @@ describe("AppShellHost", () => {
 
     await openPalette(setup);
 
-    expect(readPaletteTarget(setup, "Checkout branch")).toEqual({
-      kind: "branch",
-      name: "feature",
-    });
-
     await act(async () => {
       latestFocus?.setCursor("branches", "main");
       await setup.renderOnce();
@@ -740,7 +737,7 @@ describe("AppShellHost", () => {
 
     await openPalette(setup);
     await activatePaletteOption(setup, "Command palette");
-    await waitForCondition(setup, () => findPaletteSelect(setup) === undefined);
+    await waitForCondition(setup, () => findPaletteList(setup) === undefined);
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
@@ -748,7 +745,7 @@ describe("AppShellHost", () => {
       await setup.renderOnce();
     });
 
-    expect(findPaletteSelect(setup)).toBeUndefined();
+    expect(findPaletteList(setup)).toBeUndefined();
     expect(latestFocus?.state.activeRegion).toBe("graph");
     expect(setup.renderer.currentFocusedRenderable?.id).toBe("region-graph");
     expect(readRecentCommandIds()).toEqual([]);
@@ -778,7 +775,7 @@ describe("AppShellHost", () => {
       await setup.renderOnce();
     });
 
-    expect(findPaletteSelect(setup)).toBeUndefined();
+    expect(findPaletteList(setup)).toBeUndefined();
     expect(setup.renderer.root.findDescendantById(HELP_MODAL_ID)).toBeDefined();
     expect(setup.renderer.currentFocusedRenderable?.id).toBe(HELP_MODAL_ID);
 
@@ -798,6 +795,7 @@ describe("AppShellHost", () => {
     });
 
     await openPalette(setup);
+    await searchPalette(setup, "Focus commit composer");
 
     expect(readPaletteOption(setup, "Focus commit composer")?.description).not.toBe(
       "The commit composer is not visible",
@@ -904,7 +902,8 @@ describe("AppShellHost", () => {
       await act(async () => {
         setup.mockInput.pressKey("p", { ctrl: true });
       });
-      await waitForCondition(setup, () => findPaletteSelect(setup) !== undefined);
+      await waitForCondition(setup, () => findPaletteList(setup) !== undefined);
+      await searchPalette(setup, "fetch");
       expect(readPaletteOption(setup, "Fetch origin")).toBeDefined();
       expect(readPaletteOption(setup, "Fetch upstream")).toBeDefined();
       expect(readPaletteOption(setup, "Fetch backup")).toBeUndefined();
@@ -931,7 +930,7 @@ describe("AppShellHost", () => {
         await latestRepository?.refreshStatus();
       });
       await activatePaletteOption(setup, "Fetch upstream");
-      await waitForCondition(setup, () => findPaletteSelect(setup) === undefined);
+      await waitForCondition(setup, () => findPaletteList(setup) === undefined);
       expect(fetchCalls).toHaveLength(1);
       expect(latestStatus?.status?.message).toBe(describeCommandReason("unknown-remote"));
     } finally {
@@ -952,6 +951,7 @@ describe("AppShellHost", () => {
     });
 
     await openPalette(setup);
+    await searchPalette(setup, "Focus commit composer");
 
     expect(readPaletteOption(setup, "Focus commit composer")?.description).toBe(
       "The commit composer is not visible",
@@ -961,7 +961,7 @@ describe("AppShellHost", () => {
       resolveActionHandler("app.palette", "global")?.();
       await setup.renderOnce();
     });
-    await waitForCondition(setup, () => findPaletteSelect(setup) === undefined);
+    await waitForCondition(setup, () => findPaletteList(setup) === undefined);
 
     await act(async () => {
       latestRepository?.setSelection({ kind: "pending" });
@@ -973,6 +973,7 @@ describe("AppShellHost", () => {
     );
 
     await openPalette(setup);
+    await searchPalette(setup, "Focus commit composer");
 
     expect(readPaletteOption(setup, "Focus commit composer")?.description).not.toBe(
       "The commit composer is not visible",
@@ -1818,19 +1819,53 @@ async function openPalette(setup: Awaited<ReturnType<typeof testRender>>): Promi
     resolveActionHandler("app.palette", "global")?.();
     await setup.renderOnce();
   });
-  await waitForCondition(setup, () => findPaletteSelect(setup) !== undefined);
+  await waitForCondition(setup, () => findPaletteList(setup) !== undefined);
 }
 
 /**
- * Finds the palette result select.
+ * Finds the palette result list.
  *
  * @param setup - Renderer setup.
- * @returns The native select, or undefined when the palette is closed.
+ * @returns The result scrollbox, or undefined when the palette is closed.
  */
-function findPaletteSelect(
+function findPaletteList(setup: Awaited<ReturnType<typeof testRender>>) {
+  return setup.renderer.root.findDescendantById(PALETTE_LIST_ID);
+}
+
+/**
+ * Narrows the open palette to one query and settles the frame.
+ *
+ * @param setup - Renderer setup.
+ * @param query - Search text to enter.
+ */
+async function searchPalette(
   setup: Awaited<ReturnType<typeof testRender>>,
-): SelectRenderable | undefined {
-  return setup.renderer.root.findDescendantById(PALETTE_SELECT_ID) as SelectRenderable | undefined;
+  query: string,
+): Promise<void> {
+  const input = setup.renderer.root.findDescendantById(PALETTE_SEARCH_INPUT_ID) as
+    | { focus: () => void; value: string }
+    | undefined;
+
+  await act(async () => {
+    input?.focus();
+
+    const previousLength = input?.value.length ?? 0;
+
+    for (let index = 0; index < previousLength; index += 1) {
+      setup.mockInput.pressBackspace();
+    }
+
+    if (query.length > 0) {
+      await setup.mockInput.typeText(query);
+    }
+  });
+
+  // The scrollbox repaints its custom rows over later frames, so read them after it settles.
+  for (let frame = 0; frame < 6; frame += 1) {
+    await act(async () => {
+      await setup.renderOnce();
+    });
+  }
 }
 
 /**
@@ -1843,54 +1878,80 @@ async function activatePaletteOption(
   setup: Awaited<ReturnType<typeof testRender>>,
   fragment: string,
 ): Promise<void> {
+  await searchPalette(setup, fragment);
   await act(async () => {
-    const select = findPaletteSelect(setup);
-    const index = select?.options.findIndex((option) => option.name.includes(fragment)) ?? -1;
-
-    if (select !== undefined && index >= 0) {
-      select.setSelectedIndex(index);
-      select.selectCurrent();
-    }
-
+    resolveActionHandler("nav.activate", "overlay")?.();
     await setup.renderOnce();
   });
 }
 
 /**
- * Reads the palette option whose name contains one label.
+ * Reads the rendered palette row whose name contains one label.
  *
  * @param setup - Renderer setup.
- * @param label - Text the option name must contain.
- * @returns The option, or undefined when the palette does not render it.
+ * @param label - Text the row name must contain.
+ * @returns The row text, or undefined when the palette does not render it.
  */
 function readPaletteOption(
   setup: Awaited<ReturnType<typeof testRender>>,
   label: string,
-): { readonly name: string; readonly description: string; readonly value: string } | undefined {
-  const option = findPaletteSelect(setup)?.options.find((candidate) =>
-    candidate.name.includes(label),
+): { readonly name: string; readonly description: string } | undefined {
+  const visit = (node: {
+    readonly id?: string;
+    getChildren?: () => readonly unknown[];
+  }): { readonly name: string; readonly description: string } | undefined => {
+    if (node.id?.startsWith(`${PALETTE_ROW_ID_PREFIX}:`) === true) {
+      const texts: string[] = [];
+      const collectText = (child: {
+        readonly plainText?: string;
+        getChildren?: () => readonly unknown[];
+      }): void => {
+        if (child.plainText !== undefined) {
+          texts.push(child.plainText);
+        }
+
+        for (const grandchild of child.getChildren?.() ?? []) {
+          collectText(
+            grandchild as {
+              readonly plainText?: string;
+              getChildren?: () => readonly unknown[];
+            },
+          );
+        }
+      };
+
+      collectText(node as { readonly plainText?: string });
+
+      // `ListRow` renders its one-cell selection marker as the first text child.
+      if (texts[0]?.length === 1) {
+        texts.shift();
+      }
+
+      const name = texts[0]?.trim() ?? "";
+      const description = texts[1]?.trim() ?? "";
+
+      return name.includes(label) ? { name, description } : undefined;
+    }
+
+    for (const child of node.getChildren?.() ?? []) {
+      const found = visit(
+        child as { readonly id?: string; getChildren?: () => readonly unknown[] },
+      );
+
+      if (found !== undefined) {
+        return found;
+      }
+    }
+
+    return undefined;
+  };
+
+  return visit(
+    setup.renderer.root as unknown as {
+      id?: string;
+      getChildren?: () => readonly unknown[];
+    },
   );
-
-  return option === undefined || option.value === undefined
-    ? undefined
-    : { name: option.name, description: option.description, value: option.value };
-}
-
-/**
- * Reads the explicit target captured into one palette option.
- *
- * @param setup - Renderer setup.
- * @param label - Text the option name must contain.
- * @returns The captured target, or undefined when the option is absent.
- */
-function readPaletteTarget(
-  setup: Awaited<ReturnType<typeof testRender>>,
-  label: string,
-): CommandTarget | undefined {
-  const option = readPaletteOption(setup, label);
-  const decoded = option === undefined ? null : decodePaletteValue(option.value);
-
-  return decoded?.kind === "command" ? decoded.target : undefined;
 }
 
 /**

@@ -9,10 +9,11 @@ import type { DiffRow } from "./diffPanel.types";
  * Derives the flattened diff rows and wires them to the shared list cursor.
  *
  * The cursor is the shared `diff` region cursor, so it survives a refresh that keeps the same row
- * id. Activation and double click both resolve the row at the given index, so the cursor, the
- * expansion toggles, and the keyboard handlers always target the same row. When a selected file
- * disappears, its section header takes selection rather than an adjacent section, so staging and
- * refreshing cannot silently retarget the next bulk shortcut.
+ * id. Activation resolves the row at the given index, so the cursor, the expansion toggles, and the
+ * keyboard handlers always target the same row. A mouse click only selects a row; the row's title
+ * and expand indicator own the one-click toggle. When a selected file disappears, its section header
+ * takes selection rather than an adjacent section, so staging and refreshing cannot silently
+ * retarget the next bulk shortcut.
  *
  * @param input - Rows' source state, expansion map, activation toggles, and the row handler.
  * @returns Rows, the cursor handle, and the selection and activation helpers.
@@ -78,7 +79,6 @@ export function useDiffRows(input: {
     regionId: "diff",
     items: rows,
     onActivate: () => activateRow(cursorIndexRef.current),
-    onDoubleClick: activateRow,
     enableFirstLast: false,
   });
 
@@ -161,7 +161,7 @@ export function useDiffRows(input: {
     [cursor],
   );
 
-  /** Selects one row by its index, using the same double-click path as a mouse click. */
+  /** Selects one row by its index for a mouse click. */
   const clickRow = useCallback(
     (id: string): void => {
       const index = rows.findIndex((row) => row.id === id);

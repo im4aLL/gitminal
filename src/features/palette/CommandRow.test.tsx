@@ -3,10 +3,10 @@ import { describeCommandReason } from "@/domain/commands/commands.reasons";
 import { getCommandDescriptor } from "@/domain/commands/commands.registry";
 import type { CommandAvailability, CommandDescriptor } from "@/domain/commands/commands.types";
 import {
-  buildCommandOption,
-  buildGroupOption,
-  decodePaletteValue,
-  encodePaletteValue,
+  buildCommandRow,
+  buildHeaderRow,
+  buildSpacerRow,
+  readPaletteRowKey,
 } from "@/features/palette/CommandRow";
 import { PALETTE_UNBOUND_LABEL } from "@/features/palette/CommandRow.constants";
 import type { PaletteCommandEntry } from "@/features/palette/CommandRow.types";
@@ -35,47 +35,47 @@ function entry(
   };
 }
 
-describe("buildCommandOption", () => {
-  it("prefixes the category and appends the effective shortcut", () => {
-    const option = buildCommandOption({
+describe("buildCommandRow", () => {
+  it("renders the label with the effective shortcut", () => {
+    const row = buildCommandRow({
       entry: entry("app.refresh", { available: true }, "r"),
-      category: "app",
       textBudget: 120,
     });
 
-    expect(option.name).toBe("App: Refresh (r)");
-    expect(option.description).toBe("Reload repository state");
+    expect(row.kind).toBe("command");
+    expect(row.kind === "command" ? row.name : "").toBe("Refresh (r)");
+    expect(row.kind === "command" ? row.description : "").toBe("Reload repository state");
   });
 
   it("labels an unbound command in the name", () => {
-    const option = buildCommandOption({
+    const row = buildCommandRow({
       entry: entry("focus.region.topBar", { available: true }, PALETTE_UNBOUND_LABEL),
-      category: "focus",
       textBudget: 120,
     });
 
-    expect(option.name).toBe(`Focus: Focus top bar (${PALETTE_UNBOUND_LABEL})`);
+    expect(row.kind === "command" ? row.name : "").toBe(`Focus top bar (${PALETTE_UNBOUND_LABEL})`);
   });
 
   it("uses the exact shared reason as the description of a disabled command", () => {
-    const option = buildCommandOption({
+    const row = buildCommandRow({
       entry: entry("branch.delete", { available: false, reason: "missing-target" }, "d"),
-      category: "branch",
       textBudget: 120,
     });
 
-    expect(option.description).toBe(describeCommandReason("missing-target"));
+    expect(row.kind === "command" ? row.description : "").toBe(
+      describeCommandReason("missing-target"),
+    );
   });
 
-  it("carries the command id and target in the option value", () => {
+  it("carries the command id and target on the row", () => {
     const target = { kind: "branch", name: "feature" } as const;
     const captured: PaletteCommandEntry = {
       ...entry("branch.checkout", { available: true }, "enter"),
       target,
     };
-    const option = buildCommandOption({ entry: captured, category: "branch", textBudget: 120 });
+    const row = buildCommandRow({ entry: captured, textBudget: 120 });
 
-    expect(decodePaletteValue(option.value)).toEqual({
+    expect(row).toMatchObject({
       kind: "command",
       commandId: "branch.checkout",
       target,
@@ -83,46 +83,44 @@ describe("buildCommandOption", () => {
   });
 
   it("truncates a long name and description to the text budget", () => {
-    const option = buildCommandOption({
+    const row = buildCommandRow({
       entry: entry("remote.pushForceOverwrite", { available: true }, "Ctrl+Shift+P"),
-      category: "remote",
       textBudget: 20,
     });
 
-    expect(option.name.length).toBeLessThanOrEqual(20);
-    expect(option.name).toContain("...");
-    expect(option.description.length).toBeLessThanOrEqual(20);
+    if (row.kind !== "command") {
+      throw new Error("expected a command row");
+    }
+
+    expect(row.name.length).toBeLessThanOrEqual(20);
+    expect(row.name).toContain("...");
+    expect(row.description.length).toBeLessThanOrEqual(20);
   });
 });
 
-describe("buildGroupOption", () => {
-  it("renders a non-command header row", () => {
-    const option = buildGroupOption("focus", 120);
+describe("buildHeaderRow", () => {
+  it("renders the category label without decoration", () => {
+    const row = buildHeaderRow("focus", 120);
 
-    expect(option.name).toBe("-- Focus --");
-    expect(option.description).toBe("");
-    expect(decodePaletteValue(option.value)).toEqual({ kind: "group" });
+    expect(row).toEqual({ kind: "header", category: "focus", label: "Focus" });
   });
 });
 
-describe("decodePaletteValue", () => {
-  it("rejects values that are not palette payloads", () => {
-    expect(decodePaletteValue("not json")).toBeNull();
-    expect(decodePaletteValue(JSON.stringify({ kind: "command" }))).toBeNull();
-    expect(
-      decodePaletteValue(
-        JSON.stringify({ kind: "command", commandId: "x", target: { kind: "nope" } }),
-      ),
-    ).toBeNull();
+describe("buildSpacerRow", () => {
+  it("renders a blank spacer row that names the header it precedes", () => {
+    expect(buildSpacerRow("focus")).toEqual({ kind: "spacer", category: "focus" });
   });
+});
 
-  it("round-trips an encoded command value", () => {
-    const value = {
-      kind: "command",
-      commandId: "diff.stage",
-      target: { kind: "diffFile", section: "working", path: "src/a.ts" },
-    } as const;
+describe("readPaletteRowKey", () => {
+  it("gives command and header rows stable identities", () => {
+    const command = buildCommandRow({
+      entry: entry("app.refresh", { available: true }, "r"),
+      textBudget: 120,
+    });
 
-    expect(decodePaletteValue(encodePaletteValue(value))).toEqual(value);
+    expect(readPaletteRowKey(command)).toBe("command:app.refresh");
+    expect(readPaletteRowKey(buildHeaderRow("focus", 120))).toBe("header:focus");
+    expect(readPaletteRowKey(buildSpacerRow("focus"))).toBe("spacer:focus");
   });
 });

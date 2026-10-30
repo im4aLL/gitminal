@@ -100,8 +100,8 @@ export function MoreMenu(props: {
         focusedTextColor={tokens.text}
         selectedBackgroundColor={tokens.selection}
         selectedTextColor={tokens.text}
-        descriptionColor={tokens.dim}
-        selectedDescriptionColor={tokens.muted}
+        descriptionColor={tokens.diffContext}
+        selectedDescriptionColor={tokens.diffContext}
         showDescription
         wrapSelection={false}
         selectedIndex={0}

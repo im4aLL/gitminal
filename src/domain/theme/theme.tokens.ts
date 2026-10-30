@@ -84,15 +84,15 @@ export const THEME_TOKEN_TARGETS: readonly ThemeTokenTarget[] = [
   },
   {
     token: "muted",
-    target: "secondary text and the selected native select option description",
+    target: "row metadata and secondary text",
     prop: "fg",
-    purpose: "Secondary text, author names, and selected option descriptions",
+    purpose: "Row metadata, author names, and secondary text",
   },
   {
     token: "dim",
-    target: "hints, disabled text, and native select option descriptions",
+    target: "hints and disabled text",
     prop: "fg",
-    purpose: "Hints, context lines, disabled text, and option descriptions",
+    purpose: "Hints, disabled text, and dim secondary text",
   },
   {
     token: "selection",
@@ -180,9 +180,9 @@ export const THEME_TOKEN_TARGETS: readonly ThemeTokenTarget[] = [
   },
   {
     token: "diffContext",
-    target: "diff",
-    prop: "context line color",
-    purpose: "Diff context text",
+    target: "diff and native select option descriptions",
+    prop: "context line color and descriptionColor",
+    purpose: "Diff context text and list option descriptions",
   },
   {
     token: "diffHunk",

@@ -4,8 +4,8 @@ import { useFocusState } from "@/app/hooks/useFocusState";
 import {
   PALETTE_ACTIVATE_ACTION_ID,
   PALETTE_CLOSE_ACTION_ID,
+  PALETTE_LIST_ID,
   PALETTE_SEARCH_INPUT_ID,
-  PALETTE_SELECT_ID,
 } from "@/features/palette/CommandPalette.constants";
 import type { PaletteRow } from "@/features/palette/CommandRow.types";
 import type { UseCommandPaletteOptions } from "@/features/palette/useCommandPalette.types";
@@ -49,18 +49,18 @@ export function usePaletteKeys(input: UsePaletteKeysInput): void {
       const current = focus.state.focusedRenderableId;
 
       if (current === PALETTE_SEARCH_INPUT_ID) {
-        focus.focusRenderable(PALETTE_SELECT_ID);
+        focus.focusRenderable(PALETTE_LIST_ID);
 
         return;
       }
 
-      if (current === PALETTE_SELECT_ID) {
+      if (current === PALETTE_LIST_ID) {
         focus.focusRenderable(PALETTE_SEARCH_INPUT_ID);
 
         return;
       }
 
-      focus.focusRenderable(direction === 1 ? PALETTE_SELECT_ID : PALETTE_SEARCH_INPUT_ID);
+      focus.focusRenderable(direction === 1 ? PALETTE_LIST_ID : PALETTE_SEARCH_INPUT_ID);
     },
     [focus],
   );

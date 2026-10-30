@@ -1,4 +1,4 @@
-import type { PaletteSelectOption } from "@/features/palette/CommandRow.types";
+import type { PaletteRow } from "@/features/palette/CommandRow.types";
 
 /** Options accepted by `useCommandPalette`. */
 export interface UseCommandPaletteOptions {
@@ -28,26 +28,28 @@ export interface PaletteHandle {
   readonly query: string;
   /** Replaces the search text and resets the highlight to the first matching command. */
   readonly setQuery: (value: string) => void;
-  /** Options handed to the native select, including group headers. */
-  readonly options: readonly PaletteSelectOption[];
-  /** Highlighted option index, always a selectable command row. */
-  readonly highlightedIndex: number;
+  /** Rendered rows, including header and spacer rows. */
+  readonly rows: readonly PaletteRow[];
   /** Number of commands that survived filtering. */
   readonly matchCount: number;
-  /** Option window height for the native select. */
+  /** Visible row window used as the page-step size. */
   readonly optionRows: number;
+  /** Height the result list needs, capped by the viewport and the documented maximum. */
+  readonly listHeight: number;
+  /** Highlighted row index, always a selectable command row. */
+  readonly highlightedIndex: number;
   /** Effective shortcut keys for the modal footer. */
   readonly hints: PaletteHintKeys;
   /**
-   * Records the option the native select reports.
+   * Moves the highlight to one rendered row, resolving headers and spacers to a command.
    *
-   * @param value - Encoded option value highlighted by the widget.
+   * @param index - Requested row index.
    */
-  readonly highlightOption: (value: string) => void;
+  readonly highlightRow: (index: number) => void;
   /**
-   * Activates the option value reported by the native select.
+   * Runs the command at one rendered row after revalidation.
    *
-   * @param value - Encoded option value.
+   * @param index - Requested row index.
    */
-  readonly selectValue: (value: string) => void;
+  readonly activateRow: (index: number) => void;
 }

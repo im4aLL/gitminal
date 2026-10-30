@@ -1,3 +1,4 @@
+import type { MouseEvent } from "@opentui/core";
 import type { ReactNode } from "react";
 import type { DiffFileView, DiffSectionView } from "@/domain/repository/repository.types";
 import type { DiffActionView } from "@/features/diff/diffPanel.types";
@@ -7,6 +8,7 @@ import { Button } from "@/ui/Button";
 import { BUTTON_HORIZONTAL_PADDING } from "@/ui/Button.constants";
 import { EmptyState } from "@/ui/EmptyState";
 import { ListRow } from "@/ui/ListRow";
+import { RowTitle } from "@/ui/RowTitle";
 
 /** Cells used by the expand indicator, its gap, and the trailing gap. */
 const HEADER_STATE_WIDTH = 3;
@@ -62,15 +64,17 @@ function headerFitsOnOneLine(
  * Renders one diff section header and, when expanded, its file rows.
  *
  * The header carries the expand indicator, the F-11 title, the logical file count, and the section's
- * bulk actions. When the measured panel width cannot hold the title and every action on one line,
- * the actions move to a wrapping second line, so each label and its disabled reason stays reachable
- * at the documented 80x24 minimum. A disabled bulk action stays visible with its reason. The empty
- * message renders inside the expanded body so a collapsed empty section stays one header row. The
- * leading selection marker is suppressed so the expand indicator is the section's only leading
- * glyph. The header row stays inside the measured panel width, while the empty message sits one cell
- * into the expanded body and is capped at that width minus the indent, so a wide diff in the same
- * scroll content never stretches either. The component is presentational: the owning hook supplies
- * the file renderer and every callback.
+ * bulk actions. A click on the expand indicator or the title selects the section and toggles it in
+ * one press, while a click elsewhere on the header row only selects it, so the bulk action buttons
+ * keep their own presses. When the measured panel width cannot hold the title and every action on
+ * one line, the actions move to a wrapping second line, so each label and its disabled reason stays
+ * reachable at the documented 80x24 minimum. A disabled bulk action stays visible with its reason.
+ * The empty message renders inside the expanded body so a collapsed empty section stays one header
+ * row. The leading selection marker is suppressed so the expand indicator is the section's only
+ * leading glyph. The header row stays inside the measured panel width, while the empty message sits
+ * one cell into the expanded body and is capped at that width minus the indent, so a wide diff in
+ * the same scroll content never stretches either. The component is presentational: the owning hook
+ * supplies the file renderer and every callback.
  *
  * @param props - Section model, measured width, expansion, focus, bulk actions, empty text, and the
  * file renderer.
@@ -91,6 +95,11 @@ export function DiffSection(props: {
   const tokens = useTokens();
   const title = `${props.view.title} (${props.view.files.length})`;
   const actionsInline = headerFitsOnOneLine(props.width, title, props.bulkActions);
+  const onTitleMouseDown = (event: MouseEvent): void => {
+    event.stopPropagation();
+    props.onMouseDown();
+    props.onToggle();
+  };
 
   return (
     <box flexDirection="column" flexShrink={0}>
@@ -104,12 +113,14 @@ export function DiffSection(props: {
         >
           <box flexDirection="column" flexShrink={0}>
             <box flexDirection="row" flexShrink={0} gap={1} overflow="hidden">
-              <text fg={tokens.muted} wrapMode="none" flexShrink={0}>
-                {props.expanded ? ICONS.expanded : ICONS.collapsed}
-              </text>
-              <text fg={tokens.text} wrapMode="none" flexShrink={1}>
-                {title}
-              </text>
+              <RowTitle flexShrink={1} gap={1} onMouseDown={onTitleMouseDown}>
+                <text fg={tokens.muted} wrapMode="none" flexShrink={0}>
+                  {props.expanded ? ICONS.expanded : ICONS.collapsed}
+                </text>
+                <text fg={tokens.text} wrapMode="none" flexShrink={1}>
+                  {title}
+                </text>
+              </RowTitle>
               {actionsInline ? (
                 <ActionRow section={props.view.section} actions={props.bulkActions} />
               ) : null}
