@@ -4,7 +4,7 @@ import { testRender } from "@opentui/react/test-utils";
 import { act } from "react";
 import { resetActionRegistry } from "@/app/hooks/useAction";
 import type { GitClient } from "@/domain/git/git.types";
-import { DEFAULT_THEME_NAME, THEME_FLAVORS } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME, THEMES } from "@/domain/theme/theme.registry";
 import { MoreMenu } from "@/features/top-bar/MoreMenu";
 import { MORE_MENU_SELECT_ID } from "@/features/top-bar/MoreMenu.constants";
 import { MoreMenuLive } from "@/features/top-bar/MoreMenuLive";
@@ -96,7 +96,7 @@ describe("MoreMenu", () => {
       await setup.renderOnce();
     });
 
-    const tokens = THEME_FLAVORS[DEFAULT_THEME_NAME].tokens;
+    const tokens = THEMES[DEFAULT_THEME_NAME].tokens;
     const spans = setup.captureSpans();
     // The selected option's row is drawn above its description, so the first span containing
     // "Fetch" is the selected label and not the description below it.

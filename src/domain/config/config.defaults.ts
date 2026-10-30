@@ -1,4 +1,4 @@
-import { DEFAULT_THEME_NAME } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME } from "@/domain/theme/theme.registry";
 import type { ConfigFilePaths, GitminalConfig } from "./config.types";
 
 /** Current configuration schema version. */

@@ -407,12 +407,12 @@ export const ACTION_CATALOGUE = [
     description: "Load the next page of commit history.",
   },
   {
-    id: "help.search",
+    id: "overlay.search",
     contexts: ["overlay"],
     defaults: ["/"],
-    label: "Search help",
-    category: "help",
-    description: "Focus the help search field.",
+    label: "Search",
+    category: "overlay",
+    description: "Focus the open overlay's search field.",
   },
   {
     id: "branch.create",

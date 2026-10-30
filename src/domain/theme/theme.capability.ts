@@ -1,5 +1,5 @@
 import { nearestPaletteColor } from "./theme.capability.palette";
-import { MONO_PALETTES } from "./theme.catppuccin";
+import { MONO_PALETTES } from "./theme.mono";
 import type {
   DetectColorCapabilityOptions,
   HexColor,

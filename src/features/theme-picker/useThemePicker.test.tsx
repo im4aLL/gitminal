@@ -8,7 +8,7 @@ import { useTheme } from "@/app/hooks/useTheme";
 import { DEFAULT_CONFIG } from "@/domain/config/config.defaults";
 import type { ConfigFilePaths, ThemeWriteResult } from "@/domain/config/config.types";
 import { applyThemeCapability } from "@/domain/theme/theme.capability";
-import { THEME_FLAVORS } from "@/domain/theme/theme.catppuccin";
+import { THEME_NAMES, THEMES } from "@/domain/theme/theme.registry";
 import type { ResolvedTheme } from "@/domain/theme/theme.types";
 import { THEME_SAVE_FAILED_MESSAGE } from "@/features/theme-picker/ThemePicker.constants";
 import { useThemePicker } from "@/features/theme-picker/useThemePicker";
@@ -125,24 +125,44 @@ async function runOverlayAction(
   });
 }
 
+/**
+ * Renders until a predicate holds or the deadline passes.
+ *
+ * The picker filter settles through a quiet interval, so a filter assertion has to wait for the
+ * debounced value instead of asserting on the first render pass.
+ *
+ * @param setup - Renderer setup.
+ * @param predicate - Condition to wait for.
+ */
+async function waitFor(
+  setup: Awaited<ReturnType<typeof testRender>>,
+  predicate: () => boolean,
+): Promise<void> {
+  const deadline = Date.now() + 3_000;
+
+  while (!predicate() && Date.now() < deadline) {
+    await act(async () => {
+      await setup.renderOnce();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+  }
+}
+
 beforeEach(() => {
   resetActionRegistry();
 });
 
 describe("useThemePicker rows", () => {
-  it("lists the four flavors with the active one marked", async () => {
+  it("lists every built-in theme with the active one marked", async () => {
     const { setup } = await renderPicker();
 
-    expect(latestPicker?.rows.map((row) => row.name)).toEqual([
-      "catppuccin-mocha",
-      "catppuccin-macchiato",
-      "catppuccin-frappe",
-      "catppuccin-latte",
-    ]);
-    expect(latestPicker?.rows.map((row) => row.variant)).toEqual(["dark", "dark", "dark", "light"]);
+    expect(latestPicker?.rows.map((row) => row.name)).toEqual([...THEME_NAMES]);
     expect(latestPicker?.rows.filter((row) => row.active).map((row) => row.name)).toEqual([
       "catppuccin-mocha",
     ]);
+    expect(latestPicker?.rows.map((row) => row.variant)).toEqual(
+      THEME_NAMES.map((name) => THEMES[name].variant),
+    );
     expect(latestPicker?.highlightedIndex).toBe(0);
     expect(latestPicker?.focusedControl).toBe("apply");
 
@@ -155,12 +175,12 @@ describe("useThemePicker rows", () => {
     const { setup } = await renderPicker(undefined, "color-256");
     const mocha = latestPicker?.rows.find((row) => row.name === "catppuccin-mocha");
     const mapped = applyThemeCapability(
-      { ...THEME_FLAVORS["catppuccin-mocha"], capability: "truecolor", warnings: [] },
+      { ...THEMES["catppuccin-mocha"], capability: "truecolor", warnings: [] },
       "color-256",
     );
 
     expect(mocha?.swatchColor).toBe(mapped.tokens.background);
-    expect(mocha?.swatchColor).not.toBe(THEME_FLAVORS["catppuccin-mocha"].tokens.background);
+    expect(mocha?.swatchColor).not.toBe(THEMES["catppuccin-mocha"].tokens.background);
 
     await act(async () => {
       await setup.dispose();
@@ -198,6 +218,89 @@ describe("useThemePicker rows", () => {
 
     expect(latestPicker?.focusedZone).toBe("actions");
     expect(latestPicker?.actions.map((action) => action.focused)).toEqual([false, true]);
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+});
+
+describe("useThemePicker filter", () => {
+  it("narrows the rows to the query and keeps the highlighted theme", async () => {
+    const { setup } = await renderPicker();
+
+    await act(async () => {
+      latestPicker?.select(3);
+      await setup.renderOnce();
+    });
+
+    await act(async () => {
+      latestPicker?.setQuery("latte");
+    });
+    await waitFor(setup, () => latestPicker?.rows.length === 1);
+
+    expect(latestPicker?.query).toBe("latte");
+    expect(latestPicker?.rows.map((row) => row.name)).toEqual(["catppuccin-latte"]);
+    expect(latestPicker?.highlightedIndex).toBe(0);
+    expect(latestTheme?.name).toBe("catppuccin-latte");
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("falls back to the first match and previews it when the filter hides the highlight", async () => {
+    const { setup } = await renderPicker();
+
+    await act(async () => {
+      latestPicker?.select(3);
+      await setup.renderOnce();
+    });
+
+    await act(async () => {
+      latestPicker?.setQuery("mocha");
+    });
+    await waitFor(setup, () => latestPicker?.rows.length === 1);
+
+    expect(latestPicker?.rows[0]?.name).toBe("catppuccin-mocha");
+    expect(latestTheme?.name).toBe("catppuccin-mocha");
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("restores the full list when the query is cleared", async () => {
+    const { setup } = await renderPicker();
+
+    await act(async () => {
+      latestPicker?.setQuery("latte");
+    });
+    await waitFor(setup, () => latestPicker?.rows.length === 1);
+
+    await act(async () => {
+      latestPicker?.setQuery("");
+      await setup.renderOnce();
+    });
+
+    expect(latestPicker?.rows.length).toBe(THEME_NAMES.length);
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("keeps the current preview and an empty row list when nothing matches", async () => {
+    const { setup } = await renderPicker();
+
+    await act(async () => {
+      latestPicker?.setQuery("zzz");
+    });
+    await waitFor(setup, () => latestPicker?.rows.length === 0);
+
+    expect(latestPicker?.rows).toEqual([]);
+    expect(latestTheme?.name).toBe("catppuccin-mocha");
+    expect(latestPicker?.highlightedIndex).toBe(0);
 
     await act(async () => {
       await setup.dispose();

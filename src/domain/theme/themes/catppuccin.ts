@@ -1,12 +1,63 @@
-import type {
-  CatppuccinRoles,
-  FlavorDefinition,
-  HexColor,
-  MonochromePalette,
-  ThemeFlavor,
-  ThemeName,
-  ThemeTokens,
-} from "./theme.types";
+import type { HexColor, ThemeDefinition, ThemeTokens } from "../theme.types";
+
+/**
+ * The Catppuccin role vocabulary shared by the four official flavors.
+ *
+ * This vocabulary is local to Catppuccin on purpose: every other palette family names its colors in
+ * its own terms, so there is no cross-family role type to map onto.
+ */
+export interface CatppuccinRoles {
+  /** Base background. */
+  readonly base: HexColor;
+  /** Mantle background. */
+  readonly mantle: HexColor;
+  /** Lowest surface. */
+  readonly surface0: HexColor;
+  /** Middle surface. */
+  readonly surface1: HexColor;
+  /** Highest surface. */
+  readonly surface2: HexColor;
+  /** Overlay used for dim text. */
+  readonly overlay1: HexColor;
+  /** Secondary text. */
+  readonly subtext0: HexColor;
+  /** Primary text. */
+  readonly text: HexColor;
+  /** Mauve accent. */
+  readonly mauve: HexColor;
+  /** Red error. */
+  readonly red: HexColor;
+  /** Peach tag color. */
+  readonly peach: HexColor;
+  /** Yellow warning. */
+  readonly yellow: HexColor;
+  /** Green success. */
+  readonly green: HexColor;
+  /** Teal graph lane. */
+  readonly teal: HexColor;
+  /** Pink graph lane. */
+  readonly pink: HexColor;
+  /** Sapphire remote branch color. */
+  readonly sapphire: HexColor;
+  /** Blue info color. */
+  readonly blue: HexColor;
+}
+
+/** One Catppuccin flavor before its tokens are derived. */
+interface CatppuccinFlavor {
+  /** Stable built-in name. */
+  readonly name: ThemeDefinition["name"];
+  /** Display name. */
+  readonly label: string;
+  /** Light or dark classification. */
+  readonly variant: ThemeDefinition["variant"];
+  /** Official palette roles used by the token table. */
+  readonly roles: CatppuccinRoles;
+  /** Explicit added-line background. */
+  readonly diffAddBackground: HexColor;
+  /** Explicit removed-line background. */
+  readonly diffRemoveBackground: HexColor;
+}
 
 /** Official Catppuccin Mocha roles. */
 export const MOCHA_ROLES: CatppuccinRoles = Object.freeze({
@@ -92,56 +143,15 @@ const LATTE_ROLES: CatppuccinRoles = Object.freeze({
   blue: "#1e66f5",
 });
 
-/** The default built-in theme name. */
-export const DEFAULT_THEME_NAME: ThemeName = "catppuccin-mocha";
-
-/** Readable two-tone palette used when the terminal has no usable color. */
-const MONO_DARK_PALETTE: MonochromePalette = Object.freeze({
-  background: "#000000",
-  surface: "#1f1f1f",
-  border: "#6a6a6a",
-  focus: "#ffffff",
-  text: "#ffffff",
-  muted: "#a8a8a8",
-  dim: "#8a8a8a",
-  selection: "#2f2f2f",
-});
-
-/** Readable two-tone palette used by light themes without color support. */
-const MONO_LIGHT_PALETTE: MonochromePalette = Object.freeze({
-  background: "#ffffff",
-  surface: "#f2f2f2",
-  border: "#8f8f8f",
-  focus: "#000000",
-  text: "#000000",
-  muted: "#7a7a7a",
-  dim: "#a8a8a8",
-  selection: "#e0e0e0",
-});
-
-/** The monochrome palettes, keyed by light or dark variant. */
-export const MONO_PALETTES: Readonly<Record<"dark" | "light", MonochromePalette>> = Object.freeze({
-  dark: MONO_DARK_PALETTE,
-  light: MONO_LIGHT_PALETTE,
-});
-
-/** Every built-in theme name in picker order. */
-export const THEME_NAMES: readonly ThemeName[] = Object.freeze([
-  "catppuccin-mocha",
-  "catppuccin-macchiato",
-  "catppuccin-frappe",
-  "catppuccin-latte",
-]);
-
 /**
- * The four built-in definitions before token derivation.
+ * The four built-in Catppuccin definitions before token derivation.
  *
- * Mocha's diff backgrounds are the documented example. The Macchiato, Frappe, and Latte pairs are
- * provisional hand-picked values. The contrast-safe derivation is deferred with its threshold still
- * an open question in ticket 20, so nothing replaces these pairs yet and nothing verifies their
- * contrast.
+ * Mocha's diff backgrounds are the documented example. The Macchiato and Frappe pairs are
+ * provisional hand-picked values. The Latte add background is lighter than the upstream surface it
+ * resembles so the official green reaches the enforced 3:1 floor; every pair is verified by
+ * `theme.contrast.test.ts`, so a hand-picked value can no longer ship unreadable.
  */
-const FLAVOR_DEFINITIONS: readonly FlavorDefinition[] = [
+const CATPPUCCIN_FLAVORS: readonly CatppuccinFlavor[] = [
   {
     name: "catppuccin-mocha",
     label: "Catppuccin Mocha",
@@ -171,49 +181,31 @@ const FLAVOR_DEFINITIONS: readonly FlavorDefinition[] = [
     label: "Catppuccin Latte",
     variant: "light",
     roles: LATTE_ROLES,
-    diffAddBackground: "#dae7dd",
+    diffAddBackground: "#eef6f1",
     diffRemoveBackground: "#ecd6de",
   },
 ];
 
-/** Every built-in flavor keyed by name. */
-export const THEME_FLAVORS: Readonly<Record<ThemeName, ThemeFlavor>> = Object.freeze(
-  Object.fromEntries(
-    FLAVOR_DEFINITIONS.map((definition) => [definition.name, createFlavor(definition)]),
-  ) as Record<ThemeName, ThemeFlavor>,
+/** Every Catppuccin definition, in picker order. */
+export const CATPPUCCIN_DEFINITIONS: readonly ThemeDefinition[] = Object.freeze(
+  CATPPUCCIN_FLAVORS.map(createDefinition),
 );
 
 /**
- * Looks up a built-in flavor by name.
+ * Builds one Catppuccin definition from its palette roles.
  *
- * @param name - The requested theme name.
- * @returns The matching flavor, or `undefined` for an unknown name.
- */
-export function getThemeFlavor(name: string): ThemeFlavor | undefined {
-  if (!Object.hasOwn(THEME_FLAVORS, name)) {
-    return undefined;
-  }
-
-  return THEME_FLAVORS[name as ThemeName];
-}
-
-/**
- * Builds one flavor from its palette roles.
- *
- * The result is frozen because `THEME_FLAVORS` stores it once and every consumer receives it by
+ * The result is frozen because the registry stores it once and every consumer receives it by
  * reference; an accidental mutation would change the theme process-wide.
  *
- * @param definition - The flavor definition.
- * @returns The fully specified, frozen flavor.
+ * @param flavor - The Catppuccin flavor definition.
+ * @returns The fully specified, frozen definition.
  */
-function createFlavor(definition: FlavorDefinition): ThemeFlavor {
-  const { roles } = definition;
-
+function createDefinition(flavor: CatppuccinFlavor): ThemeDefinition {
   return Object.freeze({
-    name: definition.name,
-    label: definition.label,
-    variant: definition.variant,
-    tokens: createTokens(roles, definition.diffAddBackground, definition.diffRemoveBackground),
+    name: flavor.name,
+    label: flavor.label,
+    variant: flavor.variant,
+    tokens: createTokens(flavor.roles, flavor.diffAddBackground, flavor.diffRemoveBackground),
   });
 }
 

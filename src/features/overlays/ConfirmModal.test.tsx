@@ -4,7 +4,7 @@ import { testRender } from "@opentui/react/test-utils";
 import { act } from "react";
 import { resetActionRegistry } from "@/app/hooks/useAction";
 import { CONFIRM_LABELS } from "@/domain/commands/confirm.labels";
-import { DEFAULT_THEME_NAME, THEME_FLAVORS } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME, THEMES } from "@/domain/theme/theme.registry";
 import { ConfirmModal } from "@/features/overlays/ConfirmModal";
 import { ShellTestProviders } from "@/test/shell.harness";
 
@@ -46,7 +46,7 @@ function expectActionFocused(
   text: string,
   focused: boolean,
 ): void {
-  const tokens = THEME_FLAVORS[DEFAULT_THEME_NAME].tokens;
+  const tokens = THEMES[DEFAULT_THEME_NAME].tokens;
   const expected = focused ? tokens.selection : tokens.border;
   const frame = setup.captureSpans();
   let found: { bg: RGBA } | undefined;

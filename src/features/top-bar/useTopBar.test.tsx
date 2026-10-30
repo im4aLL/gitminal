@@ -33,7 +33,7 @@ import {
   detectRepositoryState,
 } from "@/domain/repository/repository.states";
 import type { RepositorySignals } from "@/domain/repository/repository.types";
-import { DEFAULT_THEME_NAME, THEME_FLAVORS } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME, THEMES } from "@/domain/theme/theme.registry";
 import { TopBar } from "@/features/top-bar/TopBar";
 import { TopBarActions } from "@/features/top-bar/TopBarActions";
 import { TopBarStatus } from "@/features/top-bar/TopBarStatus";
@@ -384,7 +384,7 @@ function findSpanContaining(frame: CapturedFrame, text: string, expected: string
  * @param focused - Whether the button should render the focused background.
  */
 function expectButtonFocused(frame: CapturedFrame, text: string, focused: boolean): void {
-  const tokens = THEME_FLAVORS[DEFAULT_THEME_NAME].tokens;
+  const tokens = THEMES[DEFAULT_THEME_NAME].tokens;
   const expected = focused ? tokens.selection : tokens.border;
 
   findSpanContaining(frame, text, expected);

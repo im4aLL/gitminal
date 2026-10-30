@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { createConfigSource } from "@/app/providers/config.source";
 import { DEFAULT_CONFIG } from "@/domain/config/config.defaults";
 import type { ConfigFileLoad, LoadedConfigFiles } from "@/domain/config/config.types";
-import { MOCHA_ROLES } from "@/domain/theme/theme.catppuccin";
+import { MOCHA_ROLES } from "@/domain/theme/themes/catppuccin";
 
 /** A real built-in palette token, used as a valid raw theme override value. */
 const TEST_THEME_COLOR = MOCHA_ROLES.text;

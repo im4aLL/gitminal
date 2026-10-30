@@ -1,13 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import {
-  DEFAULT_THEME_NAME,
-  getThemeFlavor,
-  MOCHA_ROLES,
-  THEME_FLAVORS,
-  THEME_NAMES,
-} from "@/domain/theme/theme.catppuccin";
-import { THEME_TOKEN_NAMES } from "@/domain/theme/theme.tokens";
-import type { HexColor } from "@/domain/theme/theme.types";
+import { THEME_TOKEN_NAMES } from "../theme.tokens";
+import type { HexColor } from "../theme.types";
+import { CATPPUCCIN_DEFINITIONS, MOCHA_ROLES } from "./catppuccin";
 
 /** Matches a validated `#RRGGBB` color. */
 const HEX_PATTERN = /^#[0-9a-f]{6}$/;
@@ -46,26 +40,45 @@ const EXPECTED_MOCHA_ROLES = {
   blue: mochaColor("89b4fa"),
 } as const;
 
-describe("Catppuccin flavors", () => {
-  it("defines the four built-in flavors in picker order", () => {
-    expect([...THEME_NAMES]).toEqual([
+/**
+ * Reads one Catppuccin definition by name.
+ *
+ * @param name - Catppuccin theme name.
+ * @returns The matching definition.
+ */
+function catppuccin(name: string): (typeof CATPPUCCIN_DEFINITIONS)[number] {
+  const definition = CATPPUCCIN_DEFINITIONS.find((entry) => entry.name === name);
+
+  if (!definition) {
+    throw new Error(`Catppuccin definition "${name}" is missing.`);
+  }
+
+  return definition;
+}
+
+describe("Catppuccin palettes", () => {
+  it("defines the four flavors in picker order", () => {
+    expect(CATPPUCCIN_DEFINITIONS.map((definition) => definition.name)).toEqual([
       "catppuccin-mocha",
       "catppuccin-macchiato",
       "catppuccin-frappe",
       "catppuccin-latte",
     ]);
-    expect(Object.keys(THEME_FLAVORS)).toEqual([...THEME_NAMES]);
   });
 
-  it("defaults to Catppuccin Mocha", () => {
-    expect(DEFAULT_THEME_NAME).toBe("catppuccin-mocha");
-    expect(getThemeFlavor(DEFAULT_THEME_NAME)?.label).toBe("Catppuccin Mocha");
+  it("labels every flavor with its official name", () => {
+    expect(CATPPUCCIN_DEFINITIONS.map((definition) => definition.label)).toEqual([
+      "Catppuccin Mocha",
+      "Catppuccin Macchiato",
+      "Catppuccin Frappe",
+      "Catppuccin Latte",
+    ]);
   });
 
   it("classifies Latte as light and the other flavors as dark", () => {
-    const variants = THEME_NAMES.map((name) => [name, getThemeFlavor(name)?.variant]);
-
-    expect(variants).toEqual([
+    expect(
+      CATPPUCCIN_DEFINITIONS.map((definition) => [definition.name, definition.variant]),
+    ).toEqual([
       ["catppuccin-mocha", "dark"],
       ["catppuccin-macchiato", "dark"],
       ["catppuccin-frappe", "dark"],
@@ -74,18 +87,14 @@ describe("Catppuccin flavors", () => {
   });
 
   it("defines every token with a valid color in every flavor", () => {
-    for (const name of THEME_NAMES) {
-      const flavor = getThemeFlavor(name);
-
-      expect(flavor).toBeDefined();
-
-      const tokens = flavor?.tokens as unknown as Record<string, string | readonly string[]>;
+    for (const definition of CATPPUCCIN_DEFINITIONS) {
+      const tokens = definition.tokens as unknown as Record<string, string | readonly string[]>;
 
       for (const token of THEME_TOKEN_NAMES) {
         const value = tokens[token];
 
         if (value === undefined) {
-          throw new Error(`Missing token "${token}" in theme "${name}".`);
+          throw new Error(`Missing token "${token}" in theme "${definition.name}".`);
         }
 
         if (typeof value === "string") {
@@ -100,11 +109,6 @@ describe("Catppuccin flavors", () => {
       }
     }
   });
-
-  it("returns undefined for an unknown flavor name", () => {
-    expect(getThemeFlavor("not-a-theme")).toBeUndefined();
-    expect(getThemeFlavor("Mocha")).toBeUndefined();
-  });
 });
 
 describe("Catppuccin Mocha token roles", () => {
@@ -113,11 +117,7 @@ describe("Catppuccin Mocha token roles", () => {
   });
 
   it("maps every token to its documented Catppuccin role", () => {
-    const mocha = getThemeFlavor("catppuccin-mocha") as ReturnType<typeof getThemeFlavor>;
-
-    expect(mocha).toBeDefined();
-
-    const tokens = mocha?.tokens as NonNullable<typeof mocha>["tokens"];
+    const tokens = catppuccin("catppuccin-mocha").tokens;
 
     expect(tokens).toMatchObject({
       background: EXPECTED_MOCHA_ROLES.base,
@@ -159,35 +159,20 @@ describe("Catppuccin Mocha token roles", () => {
   });
 
   it("pins the documented Mocha diff backgrounds", () => {
-    const tokens = getThemeFlavor("catppuccin-mocha")?.tokens;
+    const tokens = catppuccin("catppuccin-mocha").tokens;
 
-    expect(tokens?.diffAddBackground).toBe(mochaColor("1f3b2c"));
-    expect(tokens?.diffRemoveBackground).toBe(mochaColor("3b1f2a"));
+    expect(tokens.diffAddBackground).toBe(mochaColor("1f3b2c"));
+    expect(tokens.diffRemoveBackground).toBe(mochaColor("3b1f2a"));
   });
-});
 
-describe("Catppuccin shared data", () => {
-  it("freezes every exported container and the nested token data", () => {
-    expect(Object.isFrozen(THEME_NAMES)).toBe(true);
-    expect(Object.isFrozen(THEME_TOKEN_NAMES)).toBe(true);
-    expect(Object.isFrozen(THEME_FLAVORS)).toBe(true);
+  it("freezes the palette roles and every definition", () => {
     expect(Object.isFrozen(MOCHA_ROLES)).toBe(true);
+    expect(Object.isFrozen(CATPPUCCIN_DEFINITIONS)).toBe(true);
 
-    for (const name of THEME_NAMES) {
-      const flavor = getThemeFlavor(name);
-
-      expect(Object.isFrozen(flavor), name).toBe(true);
-      expect(Object.isFrozen(flavor?.tokens), name).toBe(true);
-      expect(Object.isFrozen(flavor?.tokens.graph), name).toBe(true);
+    for (const definition of CATPPUCCIN_DEFINITIONS) {
+      expect(Object.isFrozen(definition), definition.name).toBe(true);
+      expect(Object.isFrozen(definition.tokens), definition.name).toBe(true);
+      expect(Object.isFrozen(definition.tokens.graph), definition.name).toBe(true);
     }
-  });
-
-  it("does not allow mutating the frozen flavor lookup or name list", () => {
-    expect(Reflect.set(THEME_FLAVORS, "catppuccin-mocha", getThemeFlavor("catppuccin-latte"))).toBe(
-      false,
-    );
-    expect(Reflect.set(THEME_NAMES, 0, "catppuccin-latte")).toBe(false);
-    expect(THEME_FLAVORS["catppuccin-mocha"].name).toBe("catppuccin-mocha");
-    expect(THEME_NAMES[0]).toBe("catppuccin-mocha");
   });
 });

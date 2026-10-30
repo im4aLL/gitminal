@@ -1,11 +1,14 @@
 import { useCallback } from "react";
 import { useAction } from "@/app/hooks/useAction";
+import { useFocusState } from "@/app/hooks/useFocusState";
+import { THEME_PICKER_SEARCH_INPUT_ID } from "@/features/theme-picker/ThemePicker.constants";
 import { HIGHLIGHT_STEPS } from "@/features/theme-picker/useThemePicker.constants";
 import type {
   ThemePickerNavigation,
   UseThemePickerNavigationOptions,
 } from "@/features/theme-picker/useThemePicker.types";
 import { clampIndex } from "@/lib/list";
+import { MODAL_FRAME_ID } from "@/ui/ModalFrame.constants";
 
 /**
  * Owns the picker's row highlight movement and overlay key registrations.
@@ -22,6 +25,7 @@ export function useThemePickerNavigation(
   input: UseThemePickerNavigationOptions,
 ): ThemePickerNavigation {
   const { state, commit } = input;
+  const focus = useFocusState();
   const {
     cycle,
     controls,
@@ -29,24 +33,23 @@ export function useThemePickerNavigation(
     highlightedIndex,
     rows,
     setFocusedZone,
-    setHighlightedIndex,
+    setHighlightedName,
   } = state;
 
   /** Highlights one row and previews it. */
   const select = useCallback(
     (index: number): void => {
-      const next = clampIndex(index, rows.length);
-      const row = rows[next];
+      const row = rows[clampIndex(index, rows.length)];
 
       if (row === undefined) {
         return;
       }
 
       setFocusedZone("rows");
-      setHighlightedIndex(next);
+      setHighlightedName(row.name);
       controls.preview(row.name);
     },
-    [controls, rows, setFocusedZone, setHighlightedIndex],
+    [controls, rows, setFocusedZone, setHighlightedName],
   );
 
   /** Moves the highlight by one row and previews the new row. */
@@ -75,14 +78,23 @@ export function useThemePickerNavigation(
   }, [commit, cycle.control, focusedZone]);
 
   /**
-   * Moves keyboard focus between the theme rows and the modal footer actions.
+   * Moves keyboard focus between the search field, the theme rows, and the footer actions.
    *
-   * The picker has exactly two destinations, so both directions toggle, matching the palette and help
-   * field traversal. The highlighted row keeps its preview while the footer owns focus.
+   * A search field that owns native focus hands it back to the modal frame and selects the rows, so
+   * Tab always leaves the field. Otherwise the picker has exactly two destinations and both
+   * directions toggle, matching the palette and help field traversal. The highlighted row keeps its
+   * preview while the footer owns focus.
    */
   const moveZone = useCallback((): void => {
+    if (focus.state.focusedRenderableId === THEME_PICKER_SEARCH_INPUT_ID) {
+      focus.focusRenderable(MODAL_FRAME_ID);
+      setFocusedZone("rows");
+
+      return;
+    }
+
     setFocusedZone(focusedZone === "rows" ? "actions" : "rows");
-  }, [focusedZone, setFocusedZone]);
+  }, [focus, focusedZone, setFocusedZone]);
 
   useAction("nav.up", { scope: "overlay" }, () => {
     if (focusedZone === "actions") {

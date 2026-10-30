@@ -1,12 +1,21 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
+import type { ScrollBoxRenderable } from "@opentui/core";
 import { testRender } from "@opentui/react/test-utils";
 import { act, type ReactNode, useState } from "react";
+import { resetInputModes } from "@/app/hooks/inputMode.registry";
 import { resetActionRegistry, resolveActionHandler } from "@/app/hooks/useAction";
+import { clearFocusedInput, resetInputEscapeClear } from "@/app/hooks/useInputEscapeClear";
 import { useTheme } from "@/app/hooks/useTheme";
 import { DEFAULT_CONFIG, UNRESOLVED_CONFIG_PATHS } from "@/domain/config/config.defaults";
 import type { ThemeWriteResult } from "@/domain/config/config.types";
+import { THEME_NAMES } from "@/domain/theme/theme.registry";
 import type { ResolvedTheme, ThemeColorCapability } from "@/domain/theme/theme.types";
 import { ThemePicker } from "@/features/theme-picker/ThemePicker";
+import {
+  THEME_PICKER_LIST_ID,
+  THEME_PICKER_MAX_VISIBLE_ROWS,
+  THEME_PICKER_SEARCH_INPUT_ID,
+} from "@/features/theme-picker/ThemePicker.constants";
 import { themeRowId } from "@/features/theme-picker/ThemeRow";
 import { AppTestProviders } from "@/test/app.harness";
 import { createFakeGitClient } from "@/test/git.fake";
@@ -152,34 +161,74 @@ async function runOverlayAction(
   });
 }
 
+/**
+ * Renders until a predicate holds or the deadline passes.
+ *
+ * The search field settles through a quiet interval, so a filter assertion waits for the debounced
+ * value instead of asserting on the first render pass.
+ *
+ * @param setup - Renderer setup.
+ * @param predicate - Condition to wait for.
+ */
+async function waitFor(
+  setup: Awaited<ReturnType<typeof testRender>>,
+  predicate: () => boolean,
+): Promise<void> {
+  const deadline = Date.now() + 3_000;
+
+  while (!predicate() && Date.now() < deadline) {
+    await act(async () => {
+      await setup.renderOnce();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+  }
+}
+
 beforeEach(() => {
   resetActionRegistry();
+  resetInputModes();
+  resetInputEscapeClear();
 });
 
 describe("ThemePicker rendering", () => {
-  it("renders a custom row per flavor with names, variants, and the active marker", async () => {
+  it("renders a custom row per family theme with names, variants, and the active marker", async () => {
     const { setup } = await renderPicker();
     const frame = setup.captureCharFrame();
+    const visible = THEME_NAMES.slice(0, THEME_PICKER_MAX_VISIBLE_ROWS);
 
-    for (const id of [
-      themeRowId("catppuccin-mocha"),
-      themeRowId("catppuccin-macchiato"),
-      themeRowId("catppuccin-frappe"),
-      themeRowId("catppuccin-latte"),
-    ]) {
-      expect(setup.renderer.root.findDescendantById(id), id).toBeDefined();
+    for (const name of visible) {
+      expect(setup.renderer.root.findDescendantById(themeRowId(name)), name).toBeDefined();
     }
 
     expect(frame).toContain("Theme");
     expect(frame).toContain("Catppuccin Mocha");
-    expect(frame).toContain("Catppuccin Macchiato");
-    expect(frame).toContain("Catppuccin Frappe");
-    expect(frame).toContain("Catppuccin Latte");
+    expect(frame).toContain("Tokyo Night");
     expect(frame).toContain("dark");
-    expect(frame).toContain("light");
     expect(frame).toContain("*");
     expect(frame).toContain("Cancel");
     expect(frame).toContain("Apply");
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("reveals the highlighted row through the list scrollbox", async () => {
+    const { setup } = await renderPicker();
+    const list = setup.renderer.root.findDescendantById(
+      THEME_PICKER_LIST_ID,
+    ) as unknown as ScrollBoxRenderable;
+    const reveal = mock((_childId: string): void => {});
+
+    expect(THEME_NAMES.length).toBeGreaterThan(THEME_PICKER_MAX_VISIBLE_ROWS);
+
+    list.scrollChildIntoView = reveal;
+
+    await runOverlayAction(setup, "nav.down");
+
+    expect(reveal).toHaveBeenLastCalledWith(
+      themeRowId(THEME_NAMES[1] as (typeof THEME_NAMES)[number]),
+    );
 
     await act(async () => {
       await setup.dispose();
@@ -212,6 +261,79 @@ describe("ThemePicker rendering", () => {
 
     await act(async () => {
       await withOverrides.setup.dispose();
+    });
+  });
+});
+
+describe("ThemePicker search", () => {
+  it("renders the search field with its placeholder", async () => {
+    const { setup } = await renderPicker();
+    const frame = setup.captureCharFrame();
+
+    expect(setup.renderer.root.findDescendantById(THEME_PICKER_SEARCH_INPUT_ID)).toBeDefined();
+    expect(frame).toContain("Search themes");
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("narrows the rendered rows after focusing the field and typing", async () => {
+    const { setup } = await renderPicker();
+
+    await runOverlayAction(setup, "overlay.search");
+
+    await act(async () => {
+      await setup.mockInput.typeText("latte");
+      await setup.renderOnce();
+    });
+    await waitFor(setup, () => !setup.captureCharFrame().includes("Catppuccin Mocha"));
+
+    const frame = setup.captureCharFrame();
+
+    expect(frame).toContain("Catppuccin Latte");
+    expect(frame).not.toContain("Catppuccin Mocha");
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("shows a no-match message when nothing matches", async () => {
+    const { setup } = await renderPicker();
+
+    await runOverlayAction(setup, "overlay.search");
+
+    await act(async () => {
+      await setup.mockInput.typeText("zzz");
+      await setup.renderOnce();
+    });
+    await waitFor(setup, () => setup.captureCharFrame().includes("No themes match"));
+
+    expect(setup.captureCharFrame()).toContain('No themes match "zzz"');
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("registers the first-Esc clear for the field while the filter has text", async () => {
+    const { setup } = await renderPicker();
+
+    expect(clearFocusedInput(THEME_PICKER_SEARCH_INPUT_ID)).toBe(false);
+
+    await runOverlayAction(setup, "overlay.search");
+
+    await act(async () => {
+      await setup.mockInput.typeText("latte");
+      await setup.renderOnce();
+    });
+    await waitFor(setup, () => clearFocusedInput(THEME_PICKER_SEARCH_INPUT_ID));
+
+    expect(clearFocusedInput(THEME_PICKER_SEARCH_INPUT_ID)).toBe(true);
+
+    await act(async () => {
+      await setup.dispose();
     });
   });
 });

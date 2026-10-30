@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { applyThemeCapability, detectColorCapability } from "@/domain/theme/theme.capability";
 import { nearestPaletteColor } from "@/domain/theme/theme.capability.palette";
-import { MONO_PALETTES } from "@/domain/theme/theme.catppuccin";
+import { MONO_PALETTES } from "@/domain/theme/theme.mono";
 import { resolveTheme } from "@/domain/theme/theme.resolve";
 import type { HexColor, ThemeTokens } from "@/domain/theme/theme.types";
 

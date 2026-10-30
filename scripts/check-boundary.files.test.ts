@@ -69,20 +69,39 @@ function messages(errors: readonly Diagnostic[]): string {
 }
 
 describe("checkHexColors", () => {
-  it("flags a hex color outside the Catppuccin token module", () => {
+  it("flags a hex color outside the theme palette modules", () => {
     const errors = hexColorErrors("src/ui/probe.tsx", 'const accent = "#ff0000";');
 
     expect(errors).toHaveLength(1);
     expect(errors[0]?.message).toContain("hex color literals are allowed only");
   });
 
-  it("allows hex colors in the Catppuccin token module", () => {
+  it("allows hex colors in a theme palette module", () => {
     const errors = hexColorErrors(
-      "src/domain/theme/theme.catppuccin.ts",
+      "src/domain/theme/themes/catppuccin.ts",
       'export const red = "#f38ba8";',
     );
 
     expect(errors).toEqual([]);
+  });
+
+  it("allows hex colors in the monochrome palette module", () => {
+    const errors = hexColorErrors(
+      "src/domain/theme/theme.mono.ts",
+      'export const text = "#ffffff";',
+    );
+
+    expect(errors).toEqual([]);
+  });
+
+  it("flags a hex color in a theme module outside the palette directory", () => {
+    const errors = hexColorErrors(
+      "src/domain/theme/theme.resolve.ts",
+      'export const red = "#f38ba8";',
+    );
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toContain("hex color literals are allowed only");
   });
 });
 

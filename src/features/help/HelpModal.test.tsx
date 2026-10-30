@@ -171,7 +171,7 @@ beforeEach(() => {
 });
 
 describe("HelpModal", () => {
-  it("focuses the search field when help.search runs", async () => {
+  it("focuses the search field when overlay.search runs", async () => {
     const setup = await renderHelpModal();
 
     await openHelp(setup);

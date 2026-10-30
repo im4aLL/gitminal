@@ -7,7 +7,7 @@ import { resetActionRegistry } from "@/app/hooks/useAction";
 import { useFocusRegion } from "@/app/hooks/useFocusRegion";
 import { useFocusState } from "@/app/hooks/useFocusState";
 import { useHotkeys } from "@/app/hooks/useHotkeys";
-import { DEFAULT_THEME_NAME } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME } from "@/domain/theme/theme.registry";
 import { resolveTheme } from "@/domain/theme/theme.resolve";
 import { AppShell } from "@/features/shell/AppShell";
 import type { FocusContextValue, SidebarPanel } from "@/features/shell/focus.types";

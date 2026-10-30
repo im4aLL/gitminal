@@ -1,12 +1,12 @@
 import { isPlainObject } from "@/lib/object";
-import { DEFAULT_THEME_NAME, getThemeFlavor } from "./theme.catppuccin";
+import { DEFAULT_THEME_NAME, getThemeDefinition } from "./theme.registry";
 import type { ThemeToken } from "./theme.tokens";
 import { THEME_TOKEN_NAMES } from "./theme.tokens";
 import type {
   HexColor,
   ResolvedTheme,
   ResolveThemeOptions,
-  ThemeFlavor,
+  ThemeDefinition,
   ThemeOverrideLayer,
   ThemeTokens,
 } from "./theme.types";
@@ -17,7 +17,7 @@ const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 /**
  * Resolves the active built-in theme and layers the optional `theme.json` overrides.
  *
- * The layer order is the selected built-in flavor, then the per-token overrides and the graph lane
+ * The layer order is the selected built-in theme, then the per-token overrides and the graph lane
  * array from `theme.json`. An unknown or empty theme name falls back to Catppuccin Mocha with a
  * warning. The override file is validated entry by entry: an unknown token name, an invalid color
  * value, or an unsupported schema version is ignored with a warning while the base token is kept, so
@@ -32,49 +32,49 @@ export function resolveTheme(
   options: ResolveThemeOptions = {},
 ): ResolvedTheme {
   const warnings: string[] = [];
-  const flavor = readFlavor(name?.trim() ?? "", warnings);
+  const definition = readDefinition(name?.trim() ?? "", warnings);
   const layer = readOverrideLayer(options.overrides, warnings);
 
-  return toResolvedTheme(flavor, mergeOverrideLayer(flavor, layer), warnings);
+  return toResolvedTheme(definition, mergeOverrideLayer(definition, layer), warnings);
 }
 
 /**
- * Reads one built-in flavor by name.
+ * Reads one built-in definition by name.
  *
  * @param requested - The requested theme name, already trimmed.
  * @param warnings - Warning accumulator.
- * @returns The matched flavor, or the default flavor with an unknown-name warning.
+ * @returns The matched definition, or the default definition with an unknown-name warning.
  */
-function readFlavor(requested: string, warnings: string[]): ThemeFlavor {
+function readDefinition(requested: string, warnings: string[]): ThemeDefinition {
   if (requested.length === 0) {
-    return readDefaultFlavor();
+    return readDefaultDefinition();
   }
 
-  const flavor = getThemeFlavor(requested);
+  const definition = getThemeDefinition(requested);
 
-  if (flavor) {
-    return flavor;
+  if (definition) {
+    return definition;
   }
 
   warnings.push(`Unknown theme "${requested}"; using "${DEFAULT_THEME_NAME}".`);
 
-  return readDefaultFlavor();
+  return readDefaultDefinition();
 }
 
 /**
- * Reads the default flavor, which the catalogue always defines.
+ * Reads the default definition, which the catalogue always defines.
  *
- * @returns The default Catppuccin Mocha flavor.
- * @throws When the catalogue does not define the documented default flavor.
+ * @returns The default Catppuccin Mocha definition.
+ * @throws When the catalogue does not define the documented default theme.
  */
-function readDefaultFlavor(): ThemeFlavor {
-  const flavor = getThemeFlavor(DEFAULT_THEME_NAME);
+function readDefaultDefinition(): ThemeDefinition {
+  const definition = getThemeDefinition(DEFAULT_THEME_NAME);
 
-  if (!flavor) {
+  if (!definition) {
     throw new Error(`Default theme "${DEFAULT_THEME_NAME}" is not defined.`);
   }
 
-  return flavor;
+  return definition;
 }
 
 /**
@@ -208,48 +208,51 @@ function readGraphLanes(raw: unknown, warnings: string[]): readonly HexColor[] |
 }
 
 /**
- * Layers the validated overrides over one built-in flavor.
+ * Layers the validated overrides over one built-in theme.
  *
  * The built-in token object is returned by reference when nothing overrides it, so an unconfigured
  * theme keeps its frozen catalogue instance.
  *
- * @param flavor - The selected built-in flavor.
+ * @param definition - The selected built-in definition.
  * @param layer - Validated overrides, or `null` when `theme.json` is absent.
  * @returns The token table with per-token overrides and graph lane colors applied.
  */
-function mergeOverrideLayer(flavor: ThemeFlavor, layer: ThemeOverrideLayer | null): ThemeTokens {
+function mergeOverrideLayer(
+  definition: ThemeDefinition,
+  layer: ThemeOverrideLayer | null,
+): ThemeTokens {
   if (layer === null) {
-    return flavor.tokens;
+    return definition.tokens;
   }
 
   if (layer.graph === null && Object.keys(layer.tokens).length === 0) {
-    return flavor.tokens;
+    return definition.tokens;
   }
 
   return Object.freeze({
-    ...flavor.tokens,
+    ...definition.tokens,
     ...layer.tokens,
-    graph: Object.freeze(layer.graph ?? flavor.tokens.graph),
+    graph: Object.freeze(layer.graph ?? definition.tokens.graph),
   });
 }
 
 /**
- * Builds the resolved theme from a flavor and its final tokens.
+ * Builds the resolved theme from a definition and its final tokens.
  *
- * @param flavor - The selected flavor.
+ * @param definition - The selected definition.
  * @param tokens - Final tokens after any override layer.
  * @param warnings - Warnings produced while resolving.
  * @returns The resolved theme with the truecolor base capability.
  */
 function toResolvedTheme(
-  flavor: ThemeFlavor,
+  definition: ThemeDefinition,
   tokens: ThemeTokens,
   warnings: readonly string[],
 ): ResolvedTheme {
   return {
-    name: flavor.name,
-    label: flavor.label,
-    variant: flavor.variant,
+    name: definition.name,
+    label: definition.label,
+    variant: definition.variant,
     capability: "truecolor",
     tokens,
     warnings,

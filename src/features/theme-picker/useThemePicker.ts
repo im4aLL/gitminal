@@ -17,6 +17,7 @@ import type {
 } from "@/features/theme-picker/useThemePicker.types";
 import { useThemePickerCommit } from "@/features/theme-picker/useThemePickerCommit";
 import { useThemePickerNavigation } from "@/features/theme-picker/useThemePickerNavigation";
+import { useThemePickerSearch } from "@/features/theme-picker/useThemePickerSearch";
 import { useThemePickerState } from "@/features/theme-picker/useThemePickerState";
 import type { ButtonProps } from "@/ui/Button.types";
 
@@ -24,7 +25,8 @@ import type { ButtonProps } from "@/ui/Button.types";
  * Owns the theme picker's highlight, live preview, and persistence.
  *
  * The highlighted row previews immediately through `ThemeProvider`, so moving the highlight is a
- * live preview and never re-reads a file. Enter or Apply commits the highlighted theme, writes the
+ * live preview and never re-reads a file. The search field narrows the list and keeps the highlighted
+ * theme highlighted while it stays visible. Enter or Apply commits the highlighted theme, writes the
  * `theme` field through `config.writer.ts`, and closes; a write that fails keeps the theme applied
  * for the session and shows the documented warning. Esc or Cancel restores the theme that was active
  * when the picker opened. Every handler this hook registers is overlay-scoped: `nav.up`, `nav.down`,
@@ -37,7 +39,8 @@ import type { ButtonProps } from "@/ui/Button.types";
  */
 export function useThemePicker(options: UseThemePickerOptions): ThemePickerHandle {
   const config = useConfig();
-  const state = useThemePickerState();
+  const search = useThemePickerSearch();
+  const state = useThemePickerState(search);
   const commit = useThemePickerCommit({ options, state });
   const navigation = useThemePickerNavigation({ state, commit });
   const note = readOverrideNote(config.files);
@@ -53,6 +56,8 @@ export function useThemePicker(options: UseThemePickerOptions): ThemePickerHandl
     focusedZone: state.focusedZone,
     note,
     actions,
+    query: search.query,
+    setQuery: search.setQuery,
     select: navigation.select,
   };
 }

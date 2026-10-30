@@ -89,6 +89,55 @@ Every key is optional. An invalid field keeps the previous effective value and a
 }
 ```
 
+### `theme`
+
+`theme` selects a built-in palette. An unknown name falls back to Catppuccin Mocha and reports a warning, and `theme.json` can override individual tokens on top of any built-in theme. Every built-in theme is checked against the documented contrast floors, including their diff line backgrounds.
+
+<!-- theme-table:start -->
+| Name | Palette name | Variant |
+| --- | --- | --- |
+| `catppuccin-mocha` | Catppuccin Mocha | dark |
+| `catppuccin-macchiato` | Catppuccin Macchiato | dark |
+| `catppuccin-frappe` | Catppuccin Frappe | dark |
+| `catppuccin-latte` | Catppuccin Latte | light |
+| `tokyo-night-night` | Tokyo Night | dark |
+| `tokyo-night-storm` | Tokyo Night Storm | dark |
+| `tokyo-night-moon` | Tokyo Night Moon | dark |
+| `tokyo-night-day` | Tokyo Night Day | light |
+| `gruvbox-dark` | Gruvbox Dark | dark |
+| `gruvbox-light` | Gruvbox Light | light |
+| `nord` | Nord | dark |
+| `rose-pine-main` | Rose Pine | dark |
+| `rose-pine-moon` | Rose Pine Moon | dark |
+| `rose-pine-dawn` | Rose Pine Dawn | light |
+| `flexoki-ink` | Flexoki Ink | dark |
+| `flexoki-paper` | Flexoki Paper | light |
+| `dracula` | Dracula | dark |
+| `dracula-alucard` | Dracula Alucard | light |
+| `one-dark` | One Dark | dark |
+| `one-light` | One Light | light |
+| `solarized-dark` | Solarized Dark | dark |
+| `solarized-light` | Solarized Light | light |
+| `zenburn` | Zenburn | dark |
+| `high-contrast-dark` | High Contrast Dark | dark |
+| `high-contrast-light` | High Contrast Light | light |
+| `kanagawa` | Kanagawa | dark |
+| `everforest` | Everforest | dark |
+| `ayu` | Ayu | dark |
+| `nightfox` | Nightfox | dark |
+| `github-light` | GitHub Light | light |
+| `noctis` | Noctis | dark |
+| `sonokai` | Sonokai | dark |
+| `zenbones` | Zenbones | dark |
+| `tomorrow` | Tomorrow | light |
+| `seoul256` | Seoul256 | dark |
+| `srcery` | Srcery | dark |
+| `iceberg` | Iceberg | dark |
+| `night-owl` | Night Owl | dark |
+| `jellybeans` | Jellybeans | dark |
+| `tender` | Tender | dark |
+<!-- theme-table:end -->
+
 ### `graph.style`
 
 - `rounded` (default) draws lazygit's arc corners and the bullseye merge symbol. It needs full box-drawing coverage, which mainstream coding fonts have.
@@ -239,7 +288,7 @@ Defaults are scoped to the focused context: global keys work everywhere (forms a
 | Filter list | `list.filter` | `/` |
 | Search commits | `graph.search` | `/`, `ctrl+f`, `mod+f` |
 | Load older commits | `graph.loadOlder` | `L` |
-| Search help | `help.search` | `/` |
+| Search the open overlay | `overlay.search` | `/` |
 
 ### Branches, remotes, tags, stashes, and worktrees
 

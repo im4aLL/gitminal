@@ -45,11 +45,27 @@ export interface UseThemePickerOptions {
   readonly persist?: ThemePersist;
 }
 
+/** Search state and focus trigger owned by the picker filter. */
+export interface ThemePickerSearch {
+  /** Current text in the search field. */
+  readonly query: string;
+  /** Settled query the rows are filtered by. */
+  readonly activeQuery: string;
+  /** True when the settled query has visible text. */
+  readonly hasQuery: boolean;
+  /** Replaces the search text. */
+  readonly setQuery: (value: string) => void;
+  /** Clears the search text. */
+  readonly clearSearch: () => void;
+  /** Moves native focus to the search field. */
+  readonly focusSearch: () => void;
+}
+
 /** Picker state and handlers consumed by `ThemePicker`. */
 export interface ThemePickerHandle {
-  /** Rows in picker order. */
+  /** Rows in picker order, filtered by the settled search query. */
   readonly rows: readonly ThemePickerRow[];
-  /** Index of the highlighted row. */
+  /** Index of the highlighted row inside the filtered rows. */
   readonly highlightedIndex: number;
   /** Footer control that currently owns the horizontal cycle. */
   readonly focusedControl: ThemePickerControl;
@@ -59,6 +75,10 @@ export interface ThemePickerHandle {
   readonly note: string | null;
   /** Cancel and Apply actions in display order. */
   readonly actions: readonly ButtonProps[];
+  /** Current text in the search field. */
+  readonly query: string;
+  /** Replaces the search text. */
+  readonly setQuery: (value: string) => void;
   /** Highlights one row and previews its theme. */
   readonly select: (index: number) => void;
 }
@@ -74,12 +94,12 @@ export interface ThemePickerViewState {
   readonly theme: ResolvedTheme;
   /** Session-only preview, commit, and restore controls. */
   readonly controls: ThemeControls;
-  /** Rows in picker order. */
+  /** Rows in picker order, filtered by the settled search query. */
   readonly rows: readonly ThemePickerRow[];
-  /** Index of the highlighted row. */
+  /** Index of the highlighted row inside the filtered rows. */
   readonly highlightedIndex: number;
-  /** Highlights one row without previewing it. */
-  readonly setHighlightedIndex: (index: number) => void;
+  /** Stores the highlighted theme by name; the highlight previews through the state effect. */
+  readonly setHighlightedName: (name: ThemeName) => void;
   /** Zone that currently owns the keyboard. */
   readonly focusedZone: ThemePickerFocusZone;
   /** Moves the keyboard between the theme rows and the footer actions. */
@@ -88,6 +108,10 @@ export interface ThemePickerViewState {
   readonly cycle: ModalControlCycle<ThemePickerControl>;
   /** Theme name active when the picker opened, restored by a cancel or an unmount. */
   readonly previousName: ThemeName;
+  /** Current text in the search field. */
+  readonly query: string;
+  /** Replaces the search text. */
+  readonly setQuery: (value: string) => void;
   /** Marks the picker as settled so the unmount guard stops restoring the previous theme. */
   readonly settle: () => void;
 }

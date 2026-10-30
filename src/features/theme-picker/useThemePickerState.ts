@@ -6,37 +6,48 @@ import type {
 } from "@/app/hooks/useModalControlCycle.types";
 import { useTheme } from "@/app/hooks/useTheme";
 import { applyThemeCapability } from "@/domain/theme/theme.capability";
-import { THEME_FLAVORS, THEME_NAMES } from "@/domain/theme/theme.catppuccin";
+import { THEME_NAMES, THEMES } from "@/domain/theme/theme.registry";
 import type { HexColor, ThemeColorCapability, ThemeName } from "@/domain/theme/theme.types";
+import { filterThemeRows } from "@/features/theme-picker/ThemePicker.filter";
 import { INITIAL_CONTROL, PICKER_CONTROLS } from "@/features/theme-picker/useThemePicker.constants";
 import type {
   ThemePickerControl,
   ThemePickerFocusZone,
   ThemePickerRow,
+  ThemePickerSearch,
   ThemePickerViewState,
 } from "@/features/theme-picker/useThemePicker.types";
 import { useThemeControls } from "@/theme/useThemeControls";
 
 /**
- * Owns the picker's highlight, focus zone, footer cycle, and unmount restore.
+ * Owns the picker's highlight, focus zone, filter, footer cycle, and unmount restore.
  *
- * The highlight is the live preview: moving it writes the provider through `ThemeControls`, so the
- * picker never re-reads a file. `settle` marks the picker as applied or cancelled, which stops the
- * unmount guard from restoring the previous theme after the user has already chosen one.
+ * The highlight is stored by theme name rather than by index, so a filter change keeps the
+ * highlighted theme highlighted while it stays visible and falls back to the first match when it does
+ * not. The fallback previews that first match, and it never overrides an explicit preview or a
+ * restore, because it only runs while the stored highlight is filtered out. The highlight is the live preview: changing it writes the provider through `ThemeControls`, so
+ * the picker never re-reads a file. `settle` marks the picker as applied or cancelled, which stops
+ * the unmount guard from restoring the previous theme after the user has already chosen one.
  *
+ * @param search - Search state the rows are filtered by and the view renders.
  * @returns The view state the commit and navigation hooks share.
  */
-export function useThemePickerState(): ThemePickerViewState {
+export function useThemePickerState(search: ThemePickerSearch): ThemePickerViewState {
   const theme = useTheme();
   const controls = useThemeControls();
-  const [highlightedIndex, setHighlightedIndex] = useState(() => readThemeIndex(theme.name));
+  const [highlightedName, setHighlightedName] = useState<ThemeName>(theme.name);
   const [focusedZone, setFocusedZone] = useState<ThemePickerFocusZone>("rows");
   const previousName = useRef<ThemeName>(theme.name);
   const settled = useRef(false);
-  const rows = useMemo(
+  const allRows = useMemo(
     () => buildRows(theme.name, theme.capability),
     [theme.name, theme.capability],
   );
+  const rows = useMemo(
+    () => filterThemeRows(allRows, search.activeQuery),
+    [allRows, search.activeQuery],
+  );
+  const highlightedIndex = readHighlightedIndex(rows, highlightedName);
   const cycle = useModalControlCycle<ThemePickerControl>({
     order: PICKER_CONTROLS,
     initial: INITIAL_CONTROL,
@@ -46,6 +57,21 @@ export function useThemePickerState(): ThemePickerViewState {
         setFocusedZone("actions");
       }),
   });
+
+  useEffect(() => {
+    if (rows.some((row) => row.name === highlightedName)) {
+      return;
+    }
+
+    const fallback = rows[0];
+
+    if (fallback === undefined) {
+      return;
+    }
+
+    setHighlightedName(fallback.name);
+    controls.preview(fallback.name);
+  }, [controls, highlightedName, rows]);
 
   useEffect(
     () => () => {
@@ -66,11 +92,13 @@ export function useThemePickerState(): ThemePickerViewState {
     controls,
     rows,
     highlightedIndex,
-    setHighlightedIndex,
+    setHighlightedName,
     focusedZone,
     setFocusedZone,
     cycle,
     previousName: previousName.current,
+    query: search.query,
+    setQuery: search.setQuery,
     settle,
   };
 }
@@ -108,7 +136,7 @@ function readHorizontalControl(
  *
  * @param activeName - Theme currently rendered, including a live preview.
  * @param capability - Terminal capability that decides the final swatch color.
- * @returns The rows in picker order.
+ * @returns The rows in catalogue order.
  */
 function buildRows(
   activeName: ThemeName,
@@ -116,12 +144,12 @@ function buildRows(
 ): readonly ThemePickerRow[] {
   return Object.freeze(
     THEME_NAMES.map((name) => {
-      const flavor = THEME_FLAVORS[name];
+      const definition = THEMES[name];
 
       return {
         name,
-        label: flavor.label,
-        variant: flavor.variant,
+        label: definition.label,
+        variant: definition.variant,
         active: name === activeName,
         swatchColor: readSwatchColor(name, capability),
       };
@@ -130,10 +158,10 @@ function buildRows(
 }
 
 /**
- * Reads one flavor's swatch fill for the current capability.
+ * Reads one theme's swatch fill for the current capability.
  *
- * The flavor is mapped through the same capability stage the provider uses, so the picker never
- * shows a color the rest of the app would not render. Monochrome keeps the marker path instead.
+ * The theme is mapped through the same capability stage the provider uses, so the picker never shows
+ * a color the rest of the app would not render. Monochrome keeps the marker path instead.
  *
  * @param name - Built-in theme name.
  * @param capability - Terminal capability.
@@ -144,9 +172,9 @@ function readSwatchColor(name: ThemeName, capability: ThemeColorCapability): Hex
     return null;
   }
 
-  const flavor = THEME_FLAVORS[name];
+  const definition = THEMES[name];
   const mapped = applyThemeCapability(
-    { ...flavor, capability: "truecolor", warnings: [] },
+    { ...definition, capability: "truecolor", warnings: [] },
     capability,
   );
 
@@ -154,13 +182,17 @@ function readSwatchColor(name: ThemeName, capability: ThemeColorCapability): Hex
 }
 
 /**
- * Reads the index of one theme name.
+ * Reads the filtered index of the highlighted theme.
  *
- * @param name - Theme name to find.
- * @returns Its index in picker order, or zero when it is not a built-in flavor.
+ * A highlighted theme that the current filter hides falls back to the first match, which keeps the
+ * highlight, the live preview, and the applied row in agreement.
+ *
+ * @param rows - Filtered rows in catalogue order.
+ * @param highlightedName - Theme name the highlight is stored under.
+ * @returns The index to render as highlighted, or zero when no row matches.
  */
-function readThemeIndex(name: ThemeName): number {
-  const index = THEME_NAMES.indexOf(name);
+function readHighlightedIndex(rows: readonly ThemePickerRow[], highlightedName: ThemeName): number {
+  const index = rows.findIndex((row) => row.name === highlightedName);
 
   return index === -1 ? 0 : index;
 }

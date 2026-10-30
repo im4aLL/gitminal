@@ -2,6 +2,26 @@
 
 All notable changes to Gitminal are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- The final five theme families, one theme each: Srcery, Iceberg, Night Owl, Jellybeans, and Tender. All five are MIT licensed. Srcery and Jellybeans use their own diff fills where the upstream fill clears the contrast floor, and Night Owl's selected-row fill is its published selection alpha flattened over the background.
+- Five more theme families, one theme each: Noctis (default), Sonokai (default), Zenbones (Zenwritten dark), Tomorrow (base light), and Seoul256 (dark). Noctis, Sonokai, Zenbones, Tomorrow, and Seoul256 are all MIT licensed. Sonokai uses upstream's `bg_green` and `bg_red` diff fills and Seoul256 uses its own DiffAdd and DiffDelete fills.
+- Five new theme families, one theme each: Kanagawa (Wave), Everforest (medium dark), Ayu (dark), Nightfox (default), and GitHub Light. Kanagawa and Everforest use upstream's own diff line backgrounds, GitHub Light uses Primer's `diffBlob` line fills, and Ayu's selected-row fill is the published selection alpha flattened over its background. All five are MIT licensed. New families now ship exactly one theme, the variant upstream treats as primary, so the picker gains distinct looks instead of brightness ladders.
+- Twenty-one new built-in themes across ten palette families, bringing the catalogue to twenty-five: Tokyo Night (Night, Storm, Moon, Day), Gruvbox (Dark, Light), Nord, Rose Pine (Main, Moon, Dawn), Flexoki (Ink, Paper), Dracula (Dracula, Alucard), Atom One (Dark, Light), Solarized (Dark, Light), Zenburn, and High Contrast (Dark, Light). Each family owns its colors in its own module under `src/domain/theme/themes/`, and the registry flattens them into one picker order.
+- Theme search in the picker. The modal has a search field that filters by name and label, and Up, Down, and Enter keep working while it is focused.
+- A checked legibility floor for every built-in theme. `theme.contrast.test.ts` enforces WCAG contrast for primary text, secondary text, selection text, accents, diff signs on their own backgrounds, and status hues, and the picker list now caps its visible rows and scrolls the highlighted theme into view.
+- A WCAG contrast helper at `src/domain/theme/theme.contrast.ts` in the domain layer.
+
+### Changed
+
+- `help.search` is now `overlay.search`, because the help modal and the theme picker share one "focus this overlay's search field" action. A `keybindings.json` entry for `help.search` is reported as an unknown action and ignored.
+- Catppuccin Latte's `diffAddBackground` is now lighter so the official green reaches the enforced 3:1 floor.
+- Three upstream palettes needed a documented legibility adjustment. One Light, Solarized Light, and Tokyo Night Day use the same official diff-sign hues a few points darker, and Solarized assigns body text to the more legible member of its base pair, because the published values cannot reach the enforced contrast floors on their own paper backgrounds. Every other token keeps the published value, and each adjustment is explained in the family module.
+- The theme token module split into `theme.registry.ts`, `theme.mono.ts`, and one module per palette family under `themes/`. `theme.catppuccin.ts` is gone, and `THEME_FLAVORS` is now `THEMES` with `getThemeDefinition` replacing `getThemeFlavor`.
+- Hex color literals are now allowed anywhere under `src/domain/theme/themes/` plus `theme.mono.ts`, instead of one Catppuccin module.
+
 ## [1.4.0] - 2026-10-29
 
 ### Added

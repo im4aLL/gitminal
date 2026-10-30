@@ -27,3 +27,24 @@ export const THEME_SAVED_MESSAGE_PREFIX = "Theme saved:";
 
 /** Note shown below the list when `theme.json` exists. */
 export const THEME_PICKER_NOTE_PREFIX = "theme.json overrides apply over every theme";
+
+/** Stable renderable id of the theme picker search input. */
+export const THEME_PICKER_SEARCH_INPUT_ID = "theme-picker-search";
+
+/** Placeholder shown in the theme picker search input. */
+export const THEME_PICKER_SEARCH_PLACEHOLDER = "Search themes";
+
+/** Action id that focuses the theme picker search field. */
+export const THEME_PICKER_SEARCH_ACTION_ID = "overlay.search";
+
+/** Quiet interval before the theme picker search filters, in milliseconds. */
+export const THEME_PICKER_SEARCH_DEBOUNCE_MS = 60;
+
+/** Stable renderable id of the theme picker row list. */
+export const THEME_PICKER_LIST_ID = "theme-picker-list";
+
+/** Maximum rows the picker list shows before it scrolls. */
+export const THEME_PICKER_MAX_VISIBLE_ROWS = 10;
+
+/** Message shown when the filter matches no theme. */
+export const THEME_PICKER_NO_MATCH_PREFIX = "No themes match";

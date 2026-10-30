@@ -6,7 +6,7 @@ import {
   GRAPH_PAGE_SIZE_RANGE,
   UNRESOLVED_CONFIG_PATHS,
 } from "@/domain/config/config.defaults";
-import { DEFAULT_THEME_NAME, getThemeFlavor } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME, getThemeDefinition } from "@/domain/theme/theme.registry";
 
 describe("DEFAULT_CONFIG", () => {
   it("matches the documented schema defaults", () => {
@@ -36,7 +36,7 @@ describe("DEFAULT_CONFIG", () => {
 
   it("uses a built-in default theme", () => {
     expect(DEFAULT_CONFIG.theme).toBe(DEFAULT_THEME_NAME);
-    expect(getThemeFlavor(DEFAULT_CONFIG.theme)).toBeDefined();
+    expect(getThemeDefinition(DEFAULT_CONFIG.theme)).toBeDefined();
   });
 
   it("keeps the documented ranges", () => {

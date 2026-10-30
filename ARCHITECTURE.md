@@ -69,7 +69,7 @@ Forbidden imports and key access (enforced by the section 12 scripts):
 
 - Process spawning (`node:child_process`, `Bun.spawn`, `Bun.spawnSync`, `Bun.shell`, or `Bun.$`) outside `src/domain/git/git.client.ts` and `src/test/git.fixture.ts`.
 - Network access (`fetch`, `Bun.fetch`, `globalThis.fetch`, `window.fetch`, `Bun.connect`, `WebSocket`, or a `node:http`, `node:https`, `node:http2`, `node:net`, `node:dgram`, `node:tls`, or `undici` import) outside `src/domain/update/update.check.ts`.
-- Hex color literals outside `src/domain/theme/theme.catppuccin.ts`.
+- Hex color literals outside `src/domain/theme/themes/` and `src/domain/theme/theme.mono.ts`. Every palette family owns its colors in its own module under the palette directory.
 - Raw key string comparisons outside `src/domain/keymap/**` and `src/app/hooks/useHotkeys.ts`. `src/app/quit.key.ts` is the only exception: `SplashGate` runs before any provider mounts and compares only the fixed `Ctrl+C` quit chord (`key.ctrl` plus `key.name`) through that single helper. After dismissal the shell's `app.quit` action owns quit through the keymap. The boundary check flags equality comparisons between a string literal and a key-like `name`, `sequence`, `raw`, or `code` access, and allows only those three paths.
 - Any external package import inside `src/domain/**` or `src/lib/**`, including React and `@opentui/*`. Node builtins are limited to this per-module allowlist; every other builtin is rejected under domain and lib:
 
@@ -526,6 +526,7 @@ gitminal/
       theme-picker/
         ThemePicker.tsx
         ThemePicker.constants.ts
+        ThemePicker.filter.ts
         ThemePicker.types.ts
         ThemeRow.tsx
         ThemeRow.constants.ts
@@ -534,6 +535,7 @@ gitminal/
         useThemePicker.types.ts
         useThemePickerCommit.ts
         useThemePickerNavigation.ts
+        useThemePickerSearch.ts
         useThemePickerState.ts
     ui/
       Panel.tsx
@@ -675,11 +677,40 @@ gitminal/
         keymap.describe.ts
       theme/
         theme.types.ts
-        theme.catppuccin.ts
+        theme.tokens.ts
+        theme.registry.ts
+        theme.mono.ts
+        theme.contrast.ts
         theme.resolve.ts
         theme.capability.ts
         theme.capability.palette.ts
-        theme.tokens.ts
+        themes/
+          catppuccin.ts
+          tokyo-night.ts
+          gruvbox.ts
+          nord.ts
+          rose-pine.ts
+          flexoki.ts
+          dracula.ts
+          one.ts
+          solarized.ts
+          zenburn.ts
+          high-contrast.ts
+          kanagawa.ts
+          everforest.ts
+          ayu.ts
+          nightfox.ts
+          github.ts
+          noctis.ts
+          sonokai.ts
+          zenbones.ts
+          tomorrow.ts
+          seoul256.ts
+          srcery.ts
+          iceberg.ts
+          night-owl.ts
+          jellybeans.ts
+          tender.ts
       console/
         console.types.ts
         console.buffer.ts
@@ -716,6 +747,7 @@ gitminal/
       react.guard.tsx
       shell.harness.tsx
       app.harness.tsx
+      theme.harness.ts
       treeSitter.load.ts
 ```
 
@@ -1140,7 +1172,8 @@ M4 deviations, recorded here per the last rule in this document:
 
 - `@/domain/config/config.paths.ts` resolves `config.json`, `keybindings.json`, and `theme.json` using the documented configuration precedence.
 - Load order is defaults, `config.json`, `keybindings.json`, then runtime reload. The bootstrap loads the three files before the first render through `src/app/providers/config.source.ts`, so the shell has no loading state, and `ConfigProvider` keeps the resolved snapshot: effective config, resolved paths, per-file load status, validated `keybindings.json` overrides, the raw `theme.json` layer, and bounded warnings. Each file read is capped at 256 KB, and an oversized file produces one bounded warning instead of being buffered. `config.writer.ts` creates the configuration directory recursively and replaces `config.json` through a sibling temp file plus a rename, removing the temp file on failure. Validation is per field; an invalid field falls back to the previous effective value and produces a warning. `src/app/hooks/useConfigActions.ts` is the single owner of the global `app.reloadConfig` action: a reload re-reads and re-validates through the same source, applies in place on success, and keeps the previous effective configuration on a rejected file. Configuration warnings surface as a non-blocking top-bar status and one console notice, never an overlay. `combineConfigurationWarnings` in `@/domain/config/config.warnings.ts` merges the configuration warnings with the theme resolution warnings behind a `Theme:` prefix and bounds them once, so the top bar, the console, and Help report the same deduplicated set. `src/app/hooks/useMouseSetting.ts` assigns `renderer.useMouse` from `config.ui.mouse`, and the bootstrap passes the startup value to `createCliRenderer`, so a reload changes mouse reporting without a restart. `config.graph.style` selects the commit graph glyph set at render time: `rounded` keeps lazygit's arc corners and bullseye merge symbol, while `sharp` uses the WGL4 and CP437 safe sharp corners, full line ends, and an ASCII `+` merge symbol for fonts whose box-drawing coverage is partial.
-- `@/domain/theme/theme.catppuccin.ts` is the only place hex colors exist. It defines the four flavors and the token table from F-20.
+- Hex colors exist only under `@/domain/theme/themes/` plus `@/domain/theme/theme.mono.ts`. One module per palette family owns that family's colors and its own palette vocabulary, and it exports final `ThemeDefinition` entries, so no shared role vocabulary or cross-family derivation exists. `catppuccin.ts` holds the four Catppuccin flavors, their shared role type, and their role-to-token mapping. `@/domain/theme/theme.registry.ts` is the single catalogue: it flattens every family module in picker order into `THEME_NAMES` and `THEMES`, owns `DEFAULT_THEME_NAME`, and exposes `getThemeDefinition`. Adding a palette family means one new module under `themes/`, one line in the registry's definition groups, one entry in the `ThemeName` union, and one line in the registry test's expected name list.
+- Legibility is checked, not assumed. `@/domain/theme/theme.contrast.ts` computes the WCAG relative contrast ratio, and `theme.contrast.test.ts` enforces a documented floor for every token pair the app actually paints: primary text on `background`, `panel`, and `surface` at the AA 4.5 floor; text on `selection`, `muted` on `background` and `surface`, `accent` on `surface`, and the two diff sign-on-background pairs at 3.0; and the four status hues on `background` at 2.0, because each status always carries a text marker as well. The floors are calibrated against the official Catppuccin Latte palette, the lightest built-in theme, so no upstream color is altered to satisfy them. Adding a theme family without passing this test is not allowed.
 - `@/domain/theme/theme.capability.ts` detects truecolor, 256-color, and monochrome, and honors `NO_COLOR`; `theme.capability.palette.ts` owns the xterm-256 nearest-color search. Token resolution returns final colors per capability, and `ThemeProvider` memoizes the truecolor resolution and the capability mapping separately.
 - Every production scrollbox uses `src/ui/useScrollbarOptions.ts` for both axes: thumb and arrow foregrounds use `scrollbar`, and track and arrow backgrounds use `background`. This shared hook updates with theme previews, restores, and terminal capability mapping; individual surfaces retain ownership of scrollbar dimensions and visibility. This is a review rule, with live theme-switch coverage in `ScrollableList.test.tsx`.
 - UI reads colors only through `useTokens()`. No component holds a hex literal. `Swatch` is the only UI primitive that paints a caller-supplied color, and it falls back to the `ICONS.swatch` marker when the capability has no color.
@@ -1184,7 +1217,7 @@ Rules:
   - process spawning through a `node:child_process` or `child_process` import, or a `Bun.spawn`, `Bun.spawnSync`, `Bun.shell`, or `Bun.$` call or tagged template outside `src/domain/git/git.client.ts` and `src/test/git.fixture.ts`.
   - network access through a `node:http`, `node:https`, `node:http2`, `node:net`, `node:dgram`, `node:tls`, or `undici` import; a `fetch`, `Bun.fetch`, `globalThis.fetch`, or `window.fetch` call; a `Bun.connect` call; or a `WebSocket` construction outside `src/domain/update/update.check.ts`.
   - raw key string comparisons: an equality operator (`===`, `==`, `!==`, `!=`) between a string literal and a key-like `name`, `sequence`, `raw`, or `code` property access outside `src/domain/keymap/**`, `src/app/hooks/useHotkeys.ts`, and `src/app/quit.key.ts`. A receiver named `key` or ending in `Key` is key-like for every key field. A receiver named `e`, `ev`, `event`, or ending in `Event` is key-like only in a key-aware file, so outside a key-aware file a plain `catch (e) { e.code === "ENOENT" }` and a non-key-aware `event.code` are not flagged. `name` and `sequence` follow the same receiver rule. A bare `name`, `sequence`, `raw`, or `code` identifier is flagged only in a file that mentions `KeyEvent`, `useKeyboard`, or `key.name`/`key.sequence`. Ordinary data fields such as `error.code` and `branch.name` are not key fields. Two known limitations are deliberate heuristics to revisit when the keymap layer adds type-aware checks: in a key-aware file a `catch` binding named `e` is treated as a key receiver, so `catch (e) { e.code === "ENOENT" }` is a known false positive; and the checker inspects only equality comparisons and property access, so element access such as `key["name"] === "c"` and `switch (key.name)` are known false negatives.
-  - hex color literals outside `src/domain/theme/theme.catppuccin.ts`.
+  - hex color literals outside `src/domain/theme/themes/` and `src/domain/theme/theme.mono.ts`.
   - `index.ts`, `index.tsx`, `index.js`, and `index.jsx` barrel files other than the bootstrap `src/index.tsx`.
   - files named `utils`, `helpers`, `common`, or `misc`.
   - top-level functions, class methods, and exported arrow functions without a JSDoc block, checked with the TypeScript AST. Colocated `*.test.*` files are exempt. Function body size is not machine-checked; fallow owns complexity and size findings for production files. Test files are exempt from the split guidance but are still reported by fallow as review signals.
