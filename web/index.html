@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gitminal v1.4.0 - Keyboard-First Terminal Git Client</title>
-  <meta name="description" content="Gitminal (@im4all/gitminal v1.4.0) is a keyboard-first terminal git client with full mouse support, built on Bun, React 19, and OpenTUI.">
+  <title>Gitminal v1.5.0 - Keyboard-First Terminal Git Client</title>
+  <meta name="description" content="Gitminal (@im4all/gitminal v1.5.0) is a keyboard-first terminal git client with 40 built-in themes, full mouse support, built on Bun, React 19, and OpenTUI.">
   <meta name="author" content="Md Habibullah Al Hadi">
-  <meta name="keywords" content="git, terminal, git client, git gui, tui, lazygit, commit graph, syntax highlighted diff, branch, tag, stash, worktree, bun, react, opentui, keyboard-first">
+  <meta name="keywords" content="git, terminal, git client, git gui, tui, lazygit, commit graph, syntax highlighted diff, branch, tag, stash, worktree, theme, themes, color scheme, catppuccin, tokyo night, bun, react, opentui, keyboard-first">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#090a0f">
 
@@ -16,8 +16,8 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Gitminal">
   <meta property="og:locale" content="en_US">
-  <meta property="og:title" content="Gitminal v1.4.0 - Keyboard-First Terminal Git Client">
-  <meta property="og:description" content="A keyboard-first terminal git client with commit graph, Tree-sitter diffs, branches, tags, stashes, and worktrees.">
+  <meta property="og:title" content="Gitminal v1.5.0 - Keyboard-First Terminal Git Client">
+  <meta property="og:description" content="A keyboard-first terminal git client with 40 built-in themes, commit graph, Tree-sitter diffs, branches, tags, stashes, and worktrees.">
   <meta property="og:url" content="https://gitminal.habibhadi.com/">
   <meta property="og:image" content="https://gitminal.habibhadi.com/og-image.png">
   <meta property="og:image:type" content="image/png">
@@ -25,15 +25,15 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Gitminal OG card: wordmark over a commit graph, with install command and gitminal.habibhadi.com">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Gitminal v1.4.0 - Keyboard-First Terminal Git Client">
-  <meta name="twitter:description" content="A keyboard-first terminal git client with commit graph, Tree-sitter diffs, branches, tags, stashes, and worktrees.">
+  <meta name="twitter:title" content="Gitminal v1.5.0 - Keyboard-First Terminal Git Client">
+  <meta name="twitter:description" content="A keyboard-first terminal git client with 40 built-in themes, commit graph, Tree-sitter diffs, branches, tags, stashes, and worktrees.">
   <meta name="twitter:image" content="https://gitminal.habibhadi.com/og-image.png">
   <meta name="twitter:image:alt" content="Gitminal OG card: wordmark over a commit graph, with install command and gitminal.habibhadi.com">
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=1.4.0">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=1.5.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300..800;1,300..800&display=swap">
-  <link rel="stylesheet" href="./styles.css?v=1.4.0">
+  <link rel="stylesheet" href="./styles.css?v=1.5.0">
 </head>
 <body class="page">
   <div class="page__scanline" aria-hidden="true"></div>
@@ -48,7 +48,7 @@
           </span>
           <span class="topbar__title">gitminal</span>
         </a>
-        <span class="topbar__version">v1.4.0</span>
+        <span class="topbar__version">v1.5.0</span>
         <span class="topbar__divider" aria-hidden="true">|</span>
         <span class="topbar__repo-path">~/repos/gitminal</span>
         <span class="topbar__branch-badge">
@@ -117,7 +117,7 @@
             </h1>
 
             <p class="hero__description">
-              Built on <strong>Bun</strong>, <strong>React 19</strong>, and <strong>OpenTUI</strong>. Inspect lazygit-style commit graphs, syntax-highlighted Tree-sitter diffs, branches, remotes, tags, stashes, and linked worktrees with zero shell interpolation and single-mutation safety.
+              Built on <strong>Bun</strong>, <strong>React 19</strong>, and <strong>OpenTUI</strong>. Inspect lazygit-style commit graphs, syntax-highlighted Tree-sitter diffs, branches, remotes, tags, stashes, linked worktrees, and 40 built-in themes with zero shell interpolation and single-mutation safety.
             </p>
 
             <div class="hero__badges">
@@ -127,7 +127,7 @@
               </span>
               <span class="hero__badge">
                 <span class="hero__badge-label">RELEASE</span>
-                <span class="hero__badge-value hero__badge-value--accent">v1.4.0</span>
+                <span class="hero__badge-value hero__badge-value--accent">v1.5.0</span>
               </span>
               <span class="hero__badge">
                 <span class="hero__badge-label">AUTHOR</span>
@@ -225,7 +225,7 @@
             Live Multi-Pane Terminal Simulation
           </h2>
           <p class="workbench__subtitle">
-            Press <kbd class="workbench__kbd">1</kbd>-<kbd class="workbench__kbd">8</kbd> to focus regions, <kbd class="workbench__kbd">j</kbd>/<kbd class="workbench__kbd">k</kbd> to inspect commits, <kbd class="workbench__kbd">g</kbd> to toggle graph box-drawing style, or <kbd class="workbench__kbd">9</kbd> to open the Console drawer.
+            Press <kbd class="workbench__kbd">1</kbd>-<kbd class="workbench__kbd">8</kbd> to focus regions, <kbd class="workbench__kbd">j</kbd>/<kbd class="workbench__kbd">k</kbd> to inspect commits, <kbd class="workbench__kbd">g</kbd> to toggle graph box-drawing style, <kbd class="workbench__kbd">t</kbd> to open the theme picker, or <kbd class="workbench__kbd">9</kbd> to open the Console drawer.
           </p>
         </div>
 
@@ -559,17 +559,17 @@
         <div class="tui__hintbar" id="tui-sim-hintbar">
           <span class="tui__hint"><kbd>?</kbd> Help</span>
           <span class="tui__hint-sep">|</span>
-          <span class="tui__hint"><kbd>Up/k</kbd> Move up</span>
+          <span class="tui__hint"><kbd>Ctrl+P</kbd> Command palette</span>
           <span class="tui__hint-sep">|</span>
-          <span class="tui__hint"><kbd>Down/j</kbd> Move down</span>
+          <span class="tui__hint"><kbd>Up/Down/j/k</kbd> Move</span>
           <span class="tui__hint-sep">|</span>
           <span class="tui__hint"><kbd>g/G</kbd> First/Last</span>
           <span class="tui__hint-sep">|</span>
           <span class="tui__hint"><kbd>/</kbd> Search commits</span>
           <span class="tui__hint-sep">|</span>
-          <span class="tui__hint"><kbd>J/K/H/L</kbd> Scroll diff</span>
+          <span class="tui__hint"><kbd>J/K/H/L</kbd> Scroll</span>
           <span class="tui__hint-sep">|</span>
-          <span class="tui__hint"><kbd>Ctrl+P</kbd> Command palette</span>
+          <span class="tui__hint"><kbd>t</kbd> Theme picker</span>
           <span class="tui__hint-sep">|</span>
           <span class="tui__hint"><kbd>r</kbd> Refresh</span>
         </div>
@@ -583,8 +583,8 @@
         </div>
         <div class="screenshot-frame__img-wrap">
           <img
-            src="./screenshot.png?v=1.4.0"
-            alt="Gitminal v1.4.0 terminal interface showing Branches, Remotes, Tags, Stashes, Worktrees, Commit Graph with rounded box-drawing lanes, Commit Details, and syntax-highlighted Python diff."
+            src="./screenshot.png?v=1.5.0"
+            alt="Gitminal v1.5.0 terminal interface showing Branches, Remotes, Tags, Stashes, Worktrees, Commit Graph with rounded box-drawing lanes, Commit Details, and a syntax-highlighted Python diff, rendered in Catppuccin Mocha."
             class="screenshot-frame__img"
             width="1600"
             height="1000"
@@ -661,7 +661,7 @@
           </header>
           <h3 class="matrix-card__title">Context-Sensitive Keys + Full Mouse Support</h3>
           <p class="matrix-card__body">
-            A single global key dispatcher resolves precedence (Overlay -&gt; Text Editor -&gt; Native Select -&gt; Focused Region -&gt; Global). Every keyboard action has mouse parity: click to focus and select, double-click to trigger primary actions, click checkboxes/headers, and scroll any viewport with the wheel.
+            A single global key dispatcher resolves precedence (Overlay -&gt; Text Editor -&gt; Native Select -&gt; Focused Region -&gt; Global). Every keyboard action has mouse parity: click to focus and select, double-click to trigger primary actions, click checkboxes/headers, and scroll any viewport with the wheel. Overlay-scoped keys stay inside their modal, so the theme picker's chords never leak into the list behind it.
           </p>
           <div class="matrix-card__spec">
             <span>Regions: 1..9 + Tab</span>
@@ -676,7 +676,7 @@
           </header>
           <h3 class="matrix-card__title">Branches, Remotes, Tags [LR], Stashes &amp; Worktrees</h3>
           <p class="matrix-card__body">
-            Manage the entire Git lifecycle without leaving the viewport: checkout/create/delete branches, prune remotes, inspect tag presence via the fixed-width <code>[LR]</code> / <code>[L↑]</code> / <code>[L?]</code> matrix, pop/apply stashes with untracked files, and create or prune linked Git worktrees.
+            Manage the entire Git lifecycle without leaving the viewport: checkout/create/delete branches, prune remotes, inspect tag presence via the fixed-width <code>[LR]</code> / <code>[L↑]</code> / <code>[L?]</code> matrix, pop/apply stashes with untracked files, and create or prune linked Git worktrees. Search results keep their remote prefix, full tag name, stash index, and absolute worktree path.
           </p>
           <div class="matrix-card__spec">
             <span>Tag Matrix: [L R ↑ ?]</span>
@@ -686,16 +686,46 @@
 
         <article class="matrix-card">
           <header class="matrix-card__header">
-            <span class="matrix-card__index">06 // CATPPUCCIN &amp; COLOR ENGINE</span>
+            <span class="matrix-card__index">06 // THEME CATALOGUE &amp; COLOR ENGINE</span>
             <span class="matrix-card__tag">domain/theme</span>
           </header>
-          <h3 class="matrix-card__title">Truecolor, 256-Color &amp; Monochrome Fallback</h3>
+          <h3 class="matrix-card__title">40 Built-In Themes With Dark &amp; Light Tabs</h3>
           <p class="matrix-card__body">
-            Ships with four official Catppuccin flavors (<code>mocha</code>, <code>macchiato</code>, <code>frappe</code>, <code>latte</code>). Inspects <code>NO_COLOR</code>, <code>COLORTERM</code>, and <code>TERM</code> at startup to adapt automatically between 24-bit truecolor, quantized xterm-256color, and high-contrast monochrome.
+            Ships with <strong>40 built-in themes</strong> across 26 palette families, from Catppuccin and Tokyo Night to Nord, Kanagawa, Solarized, and High Contrast. Pick from Dark and Light tabs with live search, and every theme is checked against enforced WCAG contrast floors for text, accents, diff signs, and status hues. <code>NO_COLOR</code>, <code>COLORTERM</code>, and <code>TERM</code> still drive truecolor, 256-color, and monochrome fallback.
           </p>
           <div class="matrix-card__spec">
-            <span>Default: catppuccin-mocha</span>
-            <span>Live Reload: Ctrl+P</span>
+            <span>Catalogue: 40 themes / 26 families</span>
+            <span>Contrast: WCAG checked</span>
+          </div>
+        </article>
+
+        <article class="matrix-card">
+          <header class="matrix-card__header">
+            <span class="matrix-card__index">07 // USER THEME FILES</span>
+            <span class="matrix-card__tag">domain/theme + config</span>
+          </header>
+          <h3 class="matrix-card__title">Your Own Palette as One JSON File</h3>
+          <p class="matrix-card__body">
+            Drop a JSON file into the themes directory beside <code>config.json</code> (or point <code>$GITMINAL_THEMES_DIR</code> somewhere else) and it appears in the picker by name. A theme can extend any built-in and only override the tokens it cares about, and the picker's <code>Export</code> control writes the highlighted theme out as a complete file you can edit. <code>theme.json</code> still overrides individual tokens on top of any selected theme, and a broken or oversized file degrades to one warning and never prevents launch.
+          </p>
+          <div class="matrix-card__spec">
+            <span>Format: JSON + extends</span>
+            <span>Export: &lt;name&gt;-custom.json</span>
+          </div>
+        </article>
+
+        <article class="matrix-card">
+          <header class="matrix-card__header">
+            <span class="matrix-card__index">08 // NATIVE TERMINAL MODE</span>
+            <span class="matrix-card__tag">domain/theme/theme.terminal</span>
+          </header>
+          <h3 class="matrix-card__title">Adopt the Palette Your Terminal Already Uses</h3>
+          <p class="matrix-card__body">
+            Select <code>Native Terminal</code> and Gitminal asks the terminal for its palette with OSC 4, 10, and 11 queries, then maps the answer onto every token, including guarded secondary text and diff line backgrounds. It works in iTerm2, WezTerm, Kitty, Alacritty, Ghostty, Windows Terminal, and tmux. A terminal that cannot answer falls back to Catppuccin Mocha with one warning, and <code>app.reloadConfig</code> re-detects after a profile change.
+          </p>
+          <div class="matrix-card__spec">
+            <span>Detection: OSC 4 / 10 / 11</span>
+            <span>Fallback: catppuccin-mocha</span>
           </div>
         </article>
       </div>
@@ -717,8 +747,8 @@
         <!-- Left Column: Filterable Keymap Explorer -->
         <div class="keymap-box">
           <div class="keymap-box__header">
-            <span class="keymap-box__title">┌─ Default Keybindings (56 Actions)</span>
-            <span class="keymap-box__count" id="keymap-match-count">Showing 56 actions</span>
+            <span class="keymap-box__title">┌─ Default Keybindings (82 Actions)</span>
+            <span class="keymap-box__count" id="keymap-match-count">Showing 82 actions</span>
           </div>
 
           <div class="keymap-box__controls">
@@ -776,6 +806,15 @@
                 data-keymap-scope="diff"
               >
                 Diff &amp; Console (8-9)
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected="false"
+                class="keymap-box__scope-btn"
+                data-keymap-scope="overlay"
+              >
+                Overlay
               </button>
             </div>
 
@@ -849,9 +888,18 @@
               role="tab"
               aria-selected="false"
               class="config-box__tab"
+              data-config-tab="theme-file"
+            >
+              themes/*.json
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected="false"
+              class="config-box__tab"
               data-config-tab="truecolor-unix"
             >
-              Truecolor (Unix/WSL)
+              Truecolor
             </button>
             <button
               type="button"
@@ -877,9 +925,9 @@
             <div class="config-box__notes" id="config-notes-display"></div>
           </div>
 
-          <!-- Built-in Catppuccin Palette Swatches -->
+          <!-- Theme preview shortcuts -->
           <div class="config-box__swatches">
-            <div class="config-box__swatches-title">BUILT-IN CATPPUCCIN FLAVORS (CLICK TO PREVIEW IN WORKBENCH)</div>
+            <div class="config-box__swatches-title">WORKBENCH THEME PREVIEWS (CLICK TO PREVIEW IN WORKBENCH)</div>
             <div class="config-box__swatch-grid">
               <button type="button" class="swatch-pill swatch-pill--active" data-theme-pick="catppuccin-mocha">
                 <span class="swatch-pill__dot swatch-pill__dot--mocha"></span>
@@ -897,7 +945,14 @@
                 <span class="swatch-pill__dot swatch-pill__dot--mono"></span>
                 <span class="swatch-pill__name">NO_COLOR (mono)</span>
               </button>
+              <button type="button" class="swatch-pill" id="open-theme-picker-btn">
+                <span class="swatch-pill__dot swatch-pill__dot--picker"></span>
+                <span class="swatch-pill__name">[t] All 40 themes</span>
+              </button>
             </div>
+            <p class="config-box__swatches-note">
+              40 built-in themes across 26 palette families in Dark and Light tabs, plus Native Terminal detection and your own JSON theme files.
+            </p>
           </div>
         </div>
       </div>
@@ -913,7 +968,7 @@
             <?xml version="1.0" encoding="UTF-8"?><svg class="site-footer__logo" width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#000000" aria-hidden="true"><title>Gitminal</title><path d="M13 17H20" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5 7L10 12L5 17" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
           </span>
           <span class="site-footer__name">@im4all/gitminal</span>
-          <span class="site-footer__ver">v1.4.0</span>
+          <span class="site-footer__ver">v1.5.0</span>
         </div>
         <p class="site-footer__copy">
           Crafted by <strong>Md Habibullah Al Hadi</strong>. Released under the MIT License.
@@ -960,6 +1015,11 @@
       <button type="button" class="footer-bar__item" id="footer-console-trigger">
         <kbd class="footer-bar__kbd">9</kbd>
         <span class="footer-bar__label">Toggle Console</span>
+      </button>
+      <span class="footer-bar__sep" aria-hidden="true">|</span>
+      <button type="button" class="footer-bar__item" id="footer-theme-trigger">
+        <kbd class="footer-bar__kbd">t</kbd>
+        <span class="footer-bar__label">Theme Picker</span>
       </button>
       <span class="footer-bar__sep" aria-hidden="true">|</span>
       <button type="button" class="footer-bar__item" id="footer-copy-trigger">
@@ -1009,6 +1069,71 @@
     </div>
   </div>
 
-  <script src="./app.js?v=1.4.0" defer></script>
+  <!-- Interactive Theme Picker Modal Overlay -->
+  <div class="palette theme-picker" id="theme-picker-modal" role="dialog" aria-modal="true" aria-labelledby="theme-picker-title" hidden>
+    <div class="palette__backdrop" id="theme-picker-backdrop"></div>
+    <div class="palette__dialog theme-picker__dialog">
+      <header class="palette__header">
+        <span class="palette__title" id="theme-picker-title">┌─ Theme (app.themePicker)</span>
+        <button type="button" class="palette__close-btn" id="close-theme-picker-btn" aria-label="Close theme picker">
+          [Esc] Close
+        </button>
+      </header>
+
+      <div class="theme-picker__tabs" id="theme-picker-tabs" role="tablist" aria-label="Theme variant">
+        <button type="button" role="tab" aria-selected="true" class="theme-picker__tab theme-picker__tab--active" data-theme-tab="dark">
+          Dark
+        </button>
+        <button type="button" role="tab" aria-selected="false" class="theme-picker__tab" data-theme-tab="light">
+          Light
+        </button>
+      </div>
+
+      <div class="palette__search-bar">
+        <span class="palette__prompt">&gt;</span>
+        <input
+          type="search"
+          class="palette__input"
+          id="theme-picker-search"
+          placeholder="Search themes"
+          autocomplete="off"
+        >
+      </div>
+
+      <div class="palette__list theme-picker__list" id="theme-picker-list" role="listbox" aria-label="Themes" tabindex="-1"></div>
+
+      <footer class="theme-picker__footer">
+        <div class="theme-picker__hints">
+          <span><kbd>Up/Down/j/k</kbd> Move</span>
+          <span>|</span>
+          <span><kbd>[ ]</kbd> Tab</span>
+          <span>|</span>
+          <span><kbd>Left/Right</kbd> Buttons</span>
+          <span>|</span>
+          <span><kbd>Enter</kbd> Apply</span>
+          <span>|</span>
+          <span><kbd>e</kbd> Export</span>
+          <span>|</span>
+          <span><kbd>Esc</kbd> Cancel</span>
+        </div>
+        <div class="theme-picker__actions" id="theme-picker-actions">
+          <button type="button" class="theme-picker__action" data-theme-action="export" aria-pressed="false">
+            Export
+          </button>
+          <button type="button" class="theme-picker__action" data-theme-action="cancel" aria-pressed="false">
+            Cancel
+          </button>
+          <button type="button" class="theme-picker__action theme-picker__action--primary" data-theme-action="apply" aria-pressed="false">
+            Apply
+          </button>
+        </div>
+        <div class="theme-picker__status" id="theme-picker-status" aria-live="polite">
+          40 built-in themes, plus Native Terminal and your own theme files
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script src="./app.js?v=1.5.0" defer></script>
 </body>
 </html>

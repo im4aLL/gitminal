@@ -27,7 +27,8 @@
     font-family: "JetBrains Mono", monospace;
   }
   /* Crop window onto web/screenshot.png. The source is 3644x2256 with a black
-     margin; the visible window starts at x=112, y=142 and is 3420x1966. */
+     margin; the window frame starts at x=112, y=76, so the visible window starts
+     a few pixels inside it at x=128, y=152 and is 3400x1950. */
   .stage {
     position: absolute;
     top: 92px;
@@ -39,8 +40,8 @@
   }
   .stage__image {
     position: absolute;
-    top: -49.8px;
-    left: -39.3px;
+    top: -53.3px;
+    left: -44.9px;
     width: 1278.7px;
     display: block;
   }
@@ -152,7 +153,7 @@
     <div class="panel">
       <div>
         <div class="headline">Git, fully controllable from one <em>terminal viewport</em>.</div>
-        <div class="sub">Commit graph, Tree-sitter diffs, branches, tags, stashes, and worktrees. Keyboard-first with full mouse parity.</div>
+        <div class="sub">Commit graph, Tree-sitter diffs, branches, tags, stashes, worktrees, and 40 built-in themes. Keyboard-first with full mouse parity.</div>
       </div>
       <div class="aside">
         <div class="aside__label">install</div>
