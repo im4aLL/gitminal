@@ -5,6 +5,7 @@ import { HelpRow } from "@/features/help/HelpRow";
 import { HELP_UNBOUND_LABEL } from "@/features/help/HelpRow.constants";
 import type { HelpRowView } from "@/features/help/useHelp.types";
 import { ShellTestProviders } from "@/test/shell.harness";
+import { ICONS } from "@/theme/icons";
 
 /** Width the row is rendered at, wide enough that the detail text is not truncated. */
 const ROW_WIDTH = 120;
@@ -12,13 +13,18 @@ const ROW_WIDTH = 120;
 /**
  * Renders one help row inside a bounded column.
  *
- * @param props - Row to render.
+ * @param props - Row to render and whether it is the cursor row.
  * @returns The row harness.
  */
-function RowHarness(props: { readonly row: HelpRowView }): ReactNode {
+function RowHarness(props: { readonly row: HelpRowView; readonly selected?: boolean }): ReactNode {
   return (
     <box flexDirection="column" width={ROW_WIDTH} height={4}>
-      <HelpRow row={props.row} width={ROW_WIDTH} selected={false} onSelect={() => {}} />
+      <HelpRow
+        row={props.row}
+        width={ROW_WIDTH}
+        selected={props.selected === true}
+        onSelect={() => {}}
+      />
     </box>
   );
 }
@@ -45,12 +51,13 @@ function buildRow(overrides: Partial<HelpRowView> = {}): HelpRowView {
  * Renders one row and returns the captured frame text.
  *
  * @param row - Row to render.
+ * @param selected - Whether the row is the cursor row.
  * @returns The captured frame.
  */
-async function renderRow(row: HelpRowView): Promise<string> {
+async function renderRow(row: HelpRowView, selected = false): Promise<string> {
   const setup = await testRender(
     <ShellTestProviders>
-      <RowHarness row={row} />
+      <RowHarness row={row} selected={selected} />
     </ShellTestProviders>,
     { width: ROW_WIDTH, height: 6 },
   );
@@ -75,6 +82,12 @@ describe("HelpRow", () => {
     expect(frame).toContain("Pop stash");
     expect(frame).toContain("Ctrl+P");
     expect(frame).toContain("Apply and remove the selected stash");
+  });
+
+  it("separates the cursor marker from the action name with one blank column", async () => {
+    const frame = await renderRow(buildRow(), true);
+
+    expect(frame).toContain(`${ICONS.focus} Pop stash`);
   });
 
   it("renders Unbound for an action with no binding", async () => {

@@ -22,11 +22,13 @@ import { describeFooterHints, formatBinding } from "@/domain/keymap/keymap.descr
 import type { KeymapContext, ResolvedKeymap } from "@/domain/keymap/keymap.types";
 import {
   CONTEXTS_WITHOUT_GLOBAL_HINTS,
+  FOOTER_HINT_GROUPS,
   HIDDEN_CONTEXT_HINT_ACTIONS,
   HIDDEN_HINTS_BY_CONTEXT,
   MODAL_HINT_ACTIONS,
   SELECTION_HINT_ACTIONS,
 } from "@/features/shell/Footer.constants";
+import { compactHints } from "@/features/shell/Footer.hints";
 import { HintBar } from "@/ui/HintBar";
 import { useTerminalDimensions } from "@/ui/useTerminalDimensions";
 
@@ -108,15 +110,15 @@ export function Footer(): ReactNode {
       ? (state.activeRegion ?? "global")
       : "global";
 
-    return describeFooterHints(keymap, context, {
+    const contextHints = describeFooterHints(keymap, context, {
       isAvailable,
       includeGlobals: !CONTEXTS_WITHOUT_GLOBAL_HINTS.has(context),
-    })
-      .filter((hint) => !isHiddenContextHint(context, hint.actionId))
-      .map((hint) => ({
-        key: hint.keys[0] ?? "",
-        label: hint.label,
-      }));
+    }).filter((hint) => !isHiddenContextHint(context, hint.actionId));
+
+    return compactHints(contextHints, FOOTER_HINT_GROUPS).map((hint) => ({
+      key: hint.keys[0] ?? "",
+      label: hint.label,
+    }));
   }, [hintMode, isAvailable, keymap, state.activeRegion, state.focusInsideRegion]);
 
   return (

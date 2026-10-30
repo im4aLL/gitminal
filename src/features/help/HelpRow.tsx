@@ -3,6 +3,7 @@ import {
   HELP_DETAIL_MIN_BUDGET,
   HELP_KEY_SEPARATOR,
   HELP_LABEL_BUDGET,
+  HELP_ROW_CONTENT_INSET,
   HELP_ROW_SPACING,
   HELP_UNBOUND_LABEL,
 } from "@/features/help/HelpRow.constants";
@@ -20,7 +21,8 @@ import { ListRow } from "@/ui/ListRow";
  * An action that cannot run now keeps both and adds the exact shared availability reason with the
  * `[!]` marker, so a disabled action never looks runnable and is never filtered out. The keys cell is
  * never truncated away: the name and description carry the budget instead. Keys and the reason are
- * inline `<span>` runs inside `<text>`, and the marker comes from `ICONS`.
+ * inline `<span>` runs inside `<text>`, and the marker comes from `ICONS`. One blank column separates
+ * the marker from the content, so a selected row reads `> Name` rather than touching the glyph.
  *
  * @param props - Row data, available text width, selection state, and the click handler.
  * @returns The composed help row.
@@ -45,7 +47,7 @@ export function HelpRow(props: {
       focused={props.selected}
       onMouseDown={props.onSelect}
     >
-      <box flexDirection="row" gap={1}>
+      <box flexDirection="row" gap={1} paddingLeft={HELP_ROW_CONTENT_INSET}>
         <text wrapMode="none" flexShrink={0} width={HELP_LABEL_BUDGET}>
           <span fg={tokens.text}>
             {truncateText(props.row.label, HELP_LABEL_BUDGET, ICONS.ellipsis)}

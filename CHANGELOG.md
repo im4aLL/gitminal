@@ -23,6 +23,8 @@ All notable changes to Gitminal are recorded here. The format follows [Keep a Ch
 
 ### Changed
 
+- Footer hints group related chords. Focused lists advertise `Up/Down/j/k Move` instead of separate up and down hints, and the diff panel advertises `J/K/H/L Scroll` for all four viewport directions, so every valid diff hint including the `S`/`U`/`D` bulk verbs and the `Right`/`Left` expand and collapse keys fits on one line at 160 columns. Diff catalogue labels shorten to `Toggle`, `Stage`, `Unstage`, `Discard`, and `Discard all`, and a group falls back to its individual hints when one member is unavailable. Modal hints keep their per-action bindings.
+
 - The theme surface splits into one hook per concern. `ThemeProvider` is now a composition root over `useThemeSession` and `useResolvedTheme`, and the picker's view state composes `useThemePickerRows`, `useThemePickerHighlight`, `useThemePickerVariant`, `useThemePickerFocus`, and `useThemePickerSession`, so no hook exceeds the complexity ceiling the pre-commit gate enforces.
 - The theme picker drops the per-row light-or-dark label, because the tab bar states it.
 - `ThemeProvider` resolves against the catalogue the configuration loader built, so a reload lists new user themes without a restart.

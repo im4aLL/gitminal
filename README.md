@@ -376,20 +376,20 @@ These three actions are overlay-scoped: they apply while the theme picker is the
 
 | Action | ID | Default keys |
 | --- | --- | --- |
-| Toggle file | `diff.toggle` | `enter` |
+| Toggle | `diff.toggle` | `enter` |
 | Scroll down one line | `diff.scrollDown` | `J` |
 | Scroll up one line | `diff.scrollUp` | `K` |
 | Scroll down five lines | `diff.scrollFastDown` | `shift+down` |
 | Scroll up five lines | `diff.scrollFastUp` | `shift+up` |
 | Scroll left eight columns | `diff.scrollLeft` | `H`, `shift+left` |
 | Scroll right eight columns | `diff.scrollRight` | `L`, `shift+right` |
-| Stage file | `diff.stage` | `s` |
-| Unstage file | `diff.unstage` | `u` |
-| Discard file changes | `diff.discard` | `d` |
+| Stage | `diff.stage` | `s` |
+| Unstage | `diff.unstage` | `u` |
+| Discard | `diff.discard` | `d` |
 | Delete untracked file | `diff.deleteUntracked` | none |
 | Stage all in the selected section | `diff.stageAll` | `S` |
 | Unstage all | `diff.unstageAll` | `U` |
-| Discard all changes | `diff.discardAll` | `D` |
+| Discard all | `diff.discardAll` | `D` |
 | Delete all untracked files | `diff.deleteAllUntracked` | none |
 | Clear console | `console.clear` | `c` |
 
