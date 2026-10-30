@@ -24,7 +24,7 @@ export interface GitminalConfig {
     /** Git executable executed directly without a shell. */
     readonly path: string;
   };
-  /** Built-in base theme name. Unknown names fall back to Mocha with a warning. */
+  /** Theme name, either a built-in name or a user theme name. Unknown names fall back to Mocha with a warning. */
   readonly theme: string;
   /** UI behavior settings. */
   readonly ui: {

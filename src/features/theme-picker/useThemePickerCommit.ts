@@ -3,7 +3,6 @@ import { useConfig } from "@/app/hooks/useConfig";
 import { useStatus } from "@/app/hooks/useStatus";
 import type { ThemeWriteResult } from "@/domain/config/config.types";
 import { writeTheme } from "@/domain/config/config.writer";
-import type { ThemeName } from "@/domain/theme/theme.types";
 import {
   THEME_SAVE_FAILED_MESSAGE,
   THEME_SAVED_MESSAGE_PREFIX,
@@ -83,7 +82,7 @@ export function useThemePickerCommit(input: UseThemePickerCommitOptions): ThemeP
  * @returns Whether the write succeeded, with a reason on failure.
  */
 async function writeConfiguredTheme(
-  name: ThemeName,
+  name: string,
   configPath: string | null,
 ): Promise<ThemeWriteResult> {
   if (configPath === null) {

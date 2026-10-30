@@ -1,14 +1,14 @@
 import type { ModalControlCycle } from "@/app/hooks/useModalControlCycle.types";
 import type { ThemeWriteResult } from "@/domain/config/config.types";
-import type { HexColor, ResolvedTheme, ThemeName, ThemeVariant } from "@/domain/theme/theme.types";
+import type { HexColor, ResolvedTheme, ThemeVariant } from "@/domain/theme/theme.types";
 import type { ThemeControls } from "@/theme/ThemeContext.types";
 import type { ButtonProps } from "@/ui/Button.types";
 
 /** One selectable theme row. */
 export interface ThemePickerRow {
-  /** Built-in theme name the row applies. */
-  readonly name: ThemeName;
-  /** Display name from the flavor catalogue. */
+  /** Catalogue theme name the row applies. */
+  readonly name: string;
+  /** Display name from the theme catalogue. */
   readonly label: string;
   /** Light or dark classification shown next to the name. */
   readonly variant: ThemeVariant;
@@ -99,7 +99,7 @@ export interface ThemePickerViewState {
   /** Index of the highlighted row inside the filtered rows. */
   readonly highlightedIndex: number;
   /** Stores the highlighted theme by name; the highlight previews through the state effect. */
-  readonly setHighlightedName: (name: ThemeName) => void;
+  readonly setHighlightedName: (name: string) => void;
   /** Zone that currently owns the keyboard. */
   readonly focusedZone: ThemePickerFocusZone;
   /** Moves the keyboard between the theme rows and the footer actions. */
@@ -107,7 +107,7 @@ export interface ThemePickerViewState {
   /** Footer cycle that owns Left and Right inside the actions. */
   readonly cycle: ModalControlCycle<ThemePickerControl>;
   /** Theme name active when the picker opened, restored by a cancel or an unmount. */
-  readonly previousName: ThemeName;
+  readonly previousName: string;
   /** Current text in the search field. */
   readonly query: string;
   /** Replaces the search text. */

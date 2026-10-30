@@ -83,31 +83,25 @@ export interface ThemeDefinition {
 }
 
 /** A theme resolved for the current session, including non-blocking warnings. */
-export interface ResolvedTheme extends ThemeDefinition {
+export interface ResolvedTheme {
+  /** Theme identity: a built-in `ThemeName` or a user theme name. */
+  readonly name: string;
+  /** Display name used by the picker, help, and status messages. */
+  readonly label: string;
+  /** Light or dark classification. */
+  readonly variant: ThemeVariant;
   /** Capability that produced the final token colors; the base resolution is truecolor. */
   readonly capability: ThemeColorCapability;
+  /** Final token colors after override layering and capability mapping. */
+  readonly tokens: ThemeTokens;
   /** Warnings produced while resolving the requested theme. */
   readonly warnings: readonly string[];
-}
-
-/** Options accepted by the theme resolver. */
-export interface ResolveThemeOptions {
-  /** Raw parsed `theme.json` from the config loader, or `null` when absent. */
-  readonly overrides?: unknown;
 }
 
 /** Environment input for color capability detection. */
 export interface DetectColorCapabilityOptions {
   /** Environment variables read for `COLORTERM`, `TERM`, and `NO_COLOR`. */
   readonly env?: Readonly<Record<string, string | undefined>>;
-}
-
-/** Validated `theme.json` override layer ready to merge over a built-in flavor. */
-export interface ThemeOverrideLayer {
-  /** Per-token color overrides, keyed by known token names. */
-  readonly tokens: Partial<Record<Exclude<ThemeToken, "graph">, HexColor>>;
-  /** Graph lane colors, or `null` when the built-in lane order is kept. */
-  readonly graph: readonly HexColor[] | null;
 }
 
 /** Readable two-tone palette used when the terminal reports no color support. */

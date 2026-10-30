@@ -41,8 +41,8 @@ const BLUE_WEIGHT = 0.0722;
  * @returns The contrast ratio from 1 to 21.
  */
 export function contrastRatio(foreground: HexColor, background: HexColor): number {
-  const lighter = Math.max(readLuminance(foreground), readLuminance(background));
-  const darker = Math.min(readLuminance(foreground), readLuminance(background));
+  const lighter = Math.max(relativeLuminance(foreground), relativeLuminance(background));
+  const darker = Math.min(relativeLuminance(foreground), relativeLuminance(background));
 
   return (lighter + 0.05) / (darker + 0.05);
 }
@@ -50,10 +50,14 @@ export function contrastRatio(foreground: HexColor, background: HexColor): numbe
 /**
  * Computes the WCAG relative luminance of one `#RRGGBB` color.
  *
+ * The luminance is the shared brightness measure behind `contrastRatio` and the theme variant rule:
+ * a user theme without an explicit `variant` is dark when its resolved background luminance is below
+ * 0.5. Exporting the single implementation keeps a caller from re-deriving the sRGB coefficients.
+ *
  * @param color - The color to evaluate.
  * @returns The relative luminance from 0 to 1.
  */
-function readLuminance(color: HexColor): number {
+export function relativeLuminance(color: HexColor): number {
   return (
     RED_WEIGHT * readChannel(color, 1) +
     GREEN_WEIGHT * readChannel(color, 3) +

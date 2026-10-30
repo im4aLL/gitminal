@@ -9,24 +9,29 @@ import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { DEFAULT_CONFIG, UNRESOLVED_CONFIG_PATHS } from "@/domain/config/config.defaults";
 import type { GitminalConfig } from "@/domain/config/config.types";
 import { applyThemeCapability } from "@/domain/theme/theme.capability";
+import { createBuiltInCatalogue } from "@/domain/theme/theme.catalogue";
+import type { ThemeCatalogue } from "@/domain/theme/theme.catalogue.types";
+import { THEME_NAMES } from "@/domain/theme/theme.registry";
 import { resolveTheme } from "@/domain/theme/theme.resolve";
 import type { ResolvedTheme, ThemeColorCapability, ThemeTokens } from "@/domain/theme/theme.types";
 import { readGuardError, renderGuard } from "@/test/react.guard";
 import { useSyntaxStyle } from "@/theme/useSyntaxStyle";
+import { useThemeCatalogue } from "@/theme/useThemeCatalogue";
 import { useThemeControls } from "@/theme/useThemeControls";
 import { useTokens } from "@/theme/useTokens";
 
-/** Latest theme and tokens rendered by the probe. */
+/** Latest values rendered by the probe. */
 let latestTheme: ResolvedTheme | undefined;
 let latestTokens: ThemeTokens | undefined;
 let latestControls: ReturnType<typeof useThemeControls> | undefined;
 let latestSyntaxStyle: SyntaxStyle | undefined;
+let latestCatalogue: ThemeCatalogue | undefined;
 
 /** Prefix kept outside the string so an override color is not written as a hex literal. */
 const HEX_PREFIX = "#";
 
 /**
- * Reads the resolved theme, its tokens, and its controls.
+ * Reads the resolved theme, its tokens, controls, syntax style, and catalogue.
  *
  * @returns A marker element.
  */
@@ -35,6 +40,7 @@ function ThemeProbe(): ReactNode {
   latestTokens = useTokens();
   latestControls = useThemeControls();
   latestSyntaxStyle = useSyntaxStyle();
+  latestCatalogue = useThemeCatalogue();
 
   return <text>{latestTheme?.name ?? "none"}</text>;
 }
@@ -84,6 +90,17 @@ function ControlsGuardProbe(): ReactNode {
 }
 
 /**
+ * Calls `useThemeCatalogue` without a provider so the boundary can catch its guard error.
+ *
+ * @returns A marker element.
+ */
+function CatalogueGuardProbe(): ReactNode {
+  useThemeCatalogue();
+
+  return <text>catalogue guard</text>;
+}
+
+/**
  * Builds a snapshot with the given config, theme layer, and warnings.
  *
  * @param overrides - Snapshot fields to override.
@@ -120,6 +137,7 @@ async function renderTheme(
   latestTokens = undefined;
   latestControls = undefined;
   latestSyntaxStyle = undefined;
+  latestCatalogue = undefined;
 
   return testRender(
     <ConfigProvider
@@ -325,6 +343,28 @@ describe("ThemeProvider syntax style", () => {
   });
 });
 
+describe("ThemeProvider catalogue", () => {
+  it("publishes the built-in catalogue the resolver uses, in registry order", async () => {
+    const setup = await renderTheme();
+
+    await act(async () => {
+      await setup.renderOnce();
+    });
+
+    const builtIn = createBuiltInCatalogue();
+    const activeEntry = builtIn.entries.find((entry) => entry.name === latestTheme?.name);
+
+    expect(latestCatalogue).toBe(builtIn);
+    expect(latestCatalogue?.entries.map((entry) => entry.name)).toEqual([...THEME_NAMES]);
+    expect(latestTheme).toBeDefined();
+    expect(latestTheme?.tokens).toBe(activeEntry?.tokens);
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+});
+
 describe("ThemeProvider guards", () => {
   it("throws when useTheme runs outside a ThemeProvider", async () => {
     const setup = await renderGuard(<ThemeGuardProbe />);
@@ -376,6 +416,20 @@ describe("ThemeProvider guards", () => {
     });
 
     expect(readGuardError()).toBe("useThemeControls must be used within a ThemeProvider.");
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("throws when useThemeCatalogue runs outside a ThemeProvider", async () => {
+    const setup = await renderGuard(<CatalogueGuardProbe />);
+
+    await act(async () => {
+      await setup.renderOnce();
+    });
+
+    expect(readGuardError()).toBe("useThemeCatalogue must be used within a ThemeProvider.");
 
     await act(async () => {
       await setup.dispose();

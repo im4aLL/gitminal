@@ -1,4 +1,5 @@
 import type { SyntaxStyle } from "@opentui/core";
+import type { ThemeCatalogue } from "@/domain/theme/theme.catalogue.types";
 import type { ResolvedTheme } from "@/domain/theme/theme.types";
 
 /**
@@ -12,13 +13,13 @@ export interface ThemeControls {
   /**
    * Previews a theme for the rest of the session without persisting it.
    *
-   * @param name - Built-in theme name to resolve and render.
+   * @param name - Catalogue theme name to resolve and render.
    */
   readonly preview: (name: string) => void;
   /**
    * Makes a theme the active base name after it was persisted.
    *
-   * @param name - Built-in theme name that was written to configuration.
+   * @param name - Theme name that was written to configuration.
    */
   readonly commit: (name: string) => void;
   /**
@@ -37,4 +38,6 @@ export interface ThemeContextValue {
   readonly controls: ThemeControls;
   /** Renderer-bound syntax style built from the active tokens and rebuilt on every theme change. */
   readonly syntaxStyle: SyntaxStyle;
+  /** Catalogue the active name resolves against, including any loaded user themes. */
+  readonly catalogue: ThemeCatalogue;
 }

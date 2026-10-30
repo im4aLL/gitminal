@@ -29,7 +29,7 @@ const MINIMAL_CONFIG_TEMPLATE: Readonly<Record<string, unknown>> = Object.freeze
  * unwritable directory, a malformed file, or any other filesystem failure returns a failed result
  * with a reason and leaves the original file untouched.
  *
- * @param themeName - Selected built-in theme name.
+ * @param themeName - Selected theme name, either a built-in name or a user theme name.
  * @param options - Path and filesystem overrides used by tests.
  * @returns Whether the write succeeded, with a reason on failure.
  */

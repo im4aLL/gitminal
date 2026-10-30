@@ -52,7 +52,7 @@ export function ThemeRow(props: {
 /**
  * Builds the stable renderable id of one theme row.
  *
- * @param name - Built-in theme name, which is the row identity.
+ * @param name - Theme name, which is the row identity.
  * @returns The row renderable id.
  */
 export function themeRowId(name: string): string {

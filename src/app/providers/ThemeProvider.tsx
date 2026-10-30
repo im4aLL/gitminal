@@ -2,6 +2,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react
 import { useConfig } from "@/app/hooks/useConfig";
 import type { ThemeProviderProps } from "@/app/providers/ThemeProvider.types";
 import { applyThemeCapability, detectColorCapability } from "@/domain/theme/theme.capability";
+import { createBuiltInCatalogue } from "@/domain/theme/theme.catalogue";
 import { resolveTheme } from "@/domain/theme/theme.resolve";
 import { ThemeContext } from "@/theme/ThemeContext";
 import type { ThemeContextValue, ThemeControls } from "@/theme/ThemeContext.types";
@@ -11,7 +12,9 @@ import { useThemeSyntaxStyle } from "@/theme/useThemeSyntaxStyle";
  * Resolves the active theme and provides its tokens and controls to the app.
  *
  * The provider owns the active base theme name, the `theme.json` override layer from
- * `ConfigProvider`, and the capability for the current terminal. Resolution has two memoized stages:
+ * `ConfigProvider`, the catalogue the name resolves against, and the capability for the current
+ * terminal. The catalogue is built once per mount and defaults to the built-in themes; a later user
+ * theme loader widens it without changing how resolution works. Resolution has two memoized stages:
  * the requested name and override layer produce a truecolor theme, and the capability maps that theme
  * onto final colors, so a capability change never re-resolves the override file. An unknown
  * configured name falls back to Mocha with a warning, and the resolution warnings are published
@@ -43,9 +46,11 @@ export function ThemeProvider(props: ThemeProviderProps): ReactNode {
     setActiveName(configuredName);
   }, [configuredName]);
 
+  const catalogue = useMemo(createBuiltInCatalogue, []);
+
   const baseTheme = useMemo(
-    () => resolveTheme(activeName, { overrides: themeOverrides }),
-    [activeName, themeOverrides],
+    () => resolveTheme(activeName, { overrides: themeOverrides, catalogue }),
+    [activeName, catalogue, themeOverrides],
   );
   const theme = useMemo(
     () => applyThemeCapability(baseTheme, detectedCapability),
@@ -74,8 +79,8 @@ export function ThemeProvider(props: ThemeProviderProps): ReactNode {
 
   const syntaxStyle = useThemeSyntaxStyle(theme.tokens);
   const value = useMemo<ThemeContextValue>(
-    () => ({ theme, controls, syntaxStyle }),
-    [theme, controls, syntaxStyle],
+    () => ({ theme, controls, syntaxStyle, catalogue }),
+    [catalogue, theme, controls, syntaxStyle],
   );
 
   return <ThemeContext.Provider value={value}>{props.children}</ThemeContext.Provider>;

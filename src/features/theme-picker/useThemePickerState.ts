@@ -6,8 +6,8 @@ import type {
 } from "@/app/hooks/useModalControlCycle.types";
 import { useTheme } from "@/app/hooks/useTheme";
 import { applyThemeCapability } from "@/domain/theme/theme.capability";
-import { THEME_NAMES, THEMES } from "@/domain/theme/theme.registry";
-import type { HexColor, ThemeColorCapability, ThemeName } from "@/domain/theme/theme.types";
+import type { ThemeCatalogue, ThemeCatalogueEntry } from "@/domain/theme/theme.catalogue.types";
+import type { HexColor, ThemeColorCapability } from "@/domain/theme/theme.types";
 import { filterThemeRows } from "@/features/theme-picker/ThemePicker.filter";
 import { INITIAL_CONTROL, PICKER_CONTROLS } from "@/features/theme-picker/useThemePicker.constants";
 import type {
@@ -17,6 +17,7 @@ import type {
   ThemePickerSearch,
   ThemePickerViewState,
 } from "@/features/theme-picker/useThemePicker.types";
+import { useThemeCatalogue } from "@/theme/useThemeCatalogue";
 import { useThemeControls } from "@/theme/useThemeControls";
 
 /**
@@ -29,19 +30,24 @@ import { useThemeControls } from "@/theme/useThemeControls";
  * the picker never re-reads a file. `settle` marks the picker as applied or cancelled, which stops
  * the unmount guard from restoring the previous theme after the user has already chosen one.
  *
+ * Rows come from the provider's theme catalogue rather than the static registry, so a user theme
+ * added to that catalogue is listed without a second code path. The built-in catalogue keeps the
+ * registry's order, so today's list is unchanged.
+ *
  * @param search - Search state the rows are filtered by and the view renders.
  * @returns The view state the commit and navigation hooks share.
  */
 export function useThemePickerState(search: ThemePickerSearch): ThemePickerViewState {
   const theme = useTheme();
   const controls = useThemeControls();
-  const [highlightedName, setHighlightedName] = useState<ThemeName>(theme.name);
+  const catalogue = useThemeCatalogue();
+  const [highlightedName, setHighlightedName] = useState<string>(theme.name);
   const [focusedZone, setFocusedZone] = useState<ThemePickerFocusZone>("rows");
-  const previousName = useRef<ThemeName>(theme.name);
+  const previousName = useRef<string>(theme.name);
   const settled = useRef(false);
   const allRows = useMemo(
-    () => buildRows(theme.name, theme.capability),
-    [theme.name, theme.capability],
+    () => buildRows(catalogue, theme.name, theme.capability),
+    [catalogue, theme.name, theme.capability],
   );
   const rows = useMemo(
     () => filterThemeRows(allRows, search.activeQuery),
@@ -134,26 +140,24 @@ function readHorizontalControl(
  * terminal has no swatch fill, so the row falls back to the plain marker from `Swatch` and the name,
  * variant label, and active marker carry all meaning.
  *
+ * @param catalogue - Catalogue that owns the row identities and their order.
  * @param activeName - Theme currently rendered, including a live preview.
  * @param capability - Terminal capability that decides the final swatch color.
  * @returns The rows in catalogue order.
  */
 function buildRows(
-  activeName: ThemeName,
+  catalogue: ThemeCatalogue,
+  activeName: string,
   capability: ThemeColorCapability,
 ): readonly ThemePickerRow[] {
   return Object.freeze(
-    THEME_NAMES.map((name) => {
-      const definition = THEMES[name];
-
-      return {
-        name,
-        label: definition.label,
-        variant: definition.variant,
-        active: name === activeName,
-        swatchColor: readSwatchColor(name, capability),
-      };
-    }),
+    catalogue.entries.map((entry) => ({
+      name: entry.name,
+      label: entry.label,
+      variant: entry.variant,
+      active: entry.name === activeName,
+      swatchColor: readSwatchColor(entry, capability),
+    })),
   );
 }
 
@@ -163,18 +167,27 @@ function buildRows(
  * The theme is mapped through the same capability stage the provider uses, so the picker never shows
  * a color the rest of the app would not render. Monochrome keeps the marker path instead.
  *
- * @param name - Built-in theme name.
+ * @param entry - Catalogue entry whose background is previewed.
  * @param capability - Terminal capability.
  * @returns The mapped fill color, or `null` when the marker replaces the swatch.
  */
-function readSwatchColor(name: ThemeName, capability: ThemeColorCapability): HexColor | null {
+function readSwatchColor(
+  entry: ThemeCatalogueEntry,
+  capability: ThemeColorCapability,
+): HexColor | null {
   if (capability === "monochrome") {
     return null;
   }
 
-  const definition = THEMES[name];
   const mapped = applyThemeCapability(
-    { ...definition, capability: "truecolor", warnings: [] },
+    {
+      name: entry.name,
+      label: entry.label,
+      variant: entry.variant,
+      tokens: entry.tokens,
+      capability: "truecolor",
+      warnings: [],
+    },
     capability,
   );
 
@@ -191,7 +204,7 @@ function readSwatchColor(name: ThemeName, capability: ThemeColorCapability): Hex
  * @param highlightedName - Theme name the highlight is stored under.
  * @returns The index to render as highlighted, or zero when no row matches.
  */
-function readHighlightedIndex(rows: readonly ThemePickerRow[], highlightedName: ThemeName): number {
+function readHighlightedIndex(rows: readonly ThemePickerRow[], highlightedName: string): number {
   const index = rows.findIndex((row) => row.name === highlightedName);
 
   return index === -1 ? 0 : index;
