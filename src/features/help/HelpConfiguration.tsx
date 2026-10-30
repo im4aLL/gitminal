@@ -7,6 +7,8 @@ import { useTheme } from "@/app/hooks/useTheme";
 import type { ConfigFileKey } from "@/domain/config/config.types";
 import { combineConfigurationWarnings } from "@/domain/config/config.warnings";
 import { formatBinding } from "@/domain/keymap/keymap.describe";
+import { getCatalogueEntry } from "@/domain/theme/theme.catalogue";
+import type { ThemeDefinitionSource } from "@/domain/theme/theme.catalogue.types";
 import type { ResolvedTheme } from "@/domain/theme/theme.types";
 import {
   HELP_ACTIVE_THEME_LABEL,
@@ -27,18 +29,21 @@ import {
   HELP_RELOAD_NOTE_ID,
   HELP_SEARCH_NOTE,
   HELP_THEME_FILE_LABEL,
+  HELP_THEMES_DIR_LABEL,
 } from "@/features/help/HelpConfiguration.constants";
 import { ICONS } from "@/theme/icons";
+import { useThemeCatalogue } from "@/theme/useThemeCatalogue";
 import { useTokens } from "@/theme/useTokens";
 
 /**
  * Renders the help Configuration section.
  *
- * The section is read-only. It shows the resolved `config.json`, `keybindings.json`, and
- * `theme.json` paths, the per-file load status, the active theme, and the bounded configuration and
- * theme warnings with the `[!]` marker, so an absent file reads as "not present" rather than as an
- * error. Theme warnings carry a `Theme:` prefix and share the same bounded count as configuration
- * warnings, which is the same combined list the top bar and the console report.
+ * The section is read-only. It shows the resolved `config.json`, `keybindings.json`, and `theme.json`
+ * paths plus the user themes directory, the per-file load status, the active theme with its source and
+ * variant, and the bounded configuration and theme warnings with the `[!]` marker, so an absent file
+ * reads as "not present" rather than as an error. Theme warnings carry a `Theme:` prefix and share the
+ * same bounded count as configuration warnings, which is the same combined list the top bar and the
+ * console report.
  * It then documents the three input modes, including that a single-line form keeps native Enter, a
  * multiline form submits with `form.submit` and its effective keys, and Tab indents inside a
  * multiline field. The reload note is a `<markdown>` block, which points at the command palette
@@ -50,12 +55,13 @@ export function HelpConfiguration(): ReactNode {
   const tokens = useTokens();
   const config = useConfig();
   const theme = useTheme();
+  const catalogue = useThemeCatalogue();
   const keymap = useKeymap();
   const notesStyle = useHelpNotesStyle();
   const allWarnings = combineConfigurationWarnings(config.warnings, theme.warnings);
   const warnings = allWarnings.slice(0, HELP_MAX_WARNINGS);
   const omitted = Math.max(0, allWarnings.length - warnings.length);
-  const rows = buildConfigurationRows(config, theme);
+  const rows = buildConfigurationRows(config, theme, catalogue);
 
   return (
     <box flexDirection="column" flexShrink={0} paddingLeft={1}>
@@ -97,21 +103,49 @@ export function HelpConfiguration(): ReactNode {
 /**
  * Builds the resolved path, load status, and active theme rows.
  *
+ * The active theme row states the catalogue source as well as the variant, which is how a reader tells
+ * a built-in apart from a theme file or the detected Native Terminal entry without opening the picker.
+ *
  * @param config - Configuration context value.
  * @param theme - Active resolved theme.
+ * @param catalogue - Catalogue the active name was resolved against.
  * @returns The label and value of each configuration row.
  */
 function buildConfigurationRows(
   config: ReturnType<typeof useConfig>,
   theme: ResolvedTheme,
+  catalogue: ReturnType<typeof useThemeCatalogue>,
 ): readonly { readonly label: string; readonly value: string }[] {
+  const source = readThemeSource(catalogue, theme.name);
+
   return [
     { label: HELP_CONFIG_LABEL, value: config.paths.config ?? HELP_FILE_NOT_PRESENT },
     { label: HELP_KEYBINDINGS_LABEL, value: config.paths.keybindings ?? HELP_FILE_NOT_PRESENT },
     { label: HELP_THEME_FILE_LABEL, value: config.paths.theme ?? HELP_FILE_NOT_PRESENT },
+    { label: HELP_THEMES_DIR_LABEL, value: config.paths.themesDir ?? HELP_FILE_NOT_PRESENT },
     { label: HELP_LOAD_STATUS_LABEL, value: readLoadStatus(config) },
-    { label: HELP_ACTIVE_THEME_LABEL, value: `${theme.label} (${theme.name})` },
+    {
+      label: HELP_ACTIVE_THEME_LABEL,
+      value: `${theme.label} (${theme.name}, ${theme.variant}, ${source})`,
+    },
   ];
+}
+
+/**
+ * Reads where the active theme came from.
+ *
+ * A resolved name that is not in the catalogue can only be the default fallback, so it is reported as
+ * built-in, matching the entry resolution actually used.
+ *
+ * @param catalogue - Catalogue the active name was resolved against.
+ * @param name - Active theme name.
+ * @returns The catalogue source of the active theme.
+ */
+function readThemeSource(
+  catalogue: ReturnType<typeof useThemeCatalogue>,
+  name: string,
+): ThemeDefinitionSource {
+  return getCatalogueEntry(catalogue, name)?.source ?? "built-in";
 }
 
 /**

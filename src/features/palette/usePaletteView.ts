@@ -6,11 +6,7 @@ import {
   PALETTE_RESERVED_COLUMNS,
   PALETTE_RESERVED_ROWS,
 } from "@/features/palette/CommandPalette.constants";
-import type {
-  PaletteCommandEntry,
-  PaletteRow,
-  PaletteSelectOption,
-} from "@/features/palette/CommandRow.types";
+import type { PaletteCommandEntry, PaletteRow } from "@/features/palette/CommandRow.types";
 import {
   buildPaletteRows,
   moveSelectableIndex,
@@ -23,14 +19,14 @@ export interface PaletteView {
   readonly query: string;
   /** Replaces the search text and resets the highlight to the first match. */
   readonly setQuery: (value: string) => void;
-  /** Rendered rows, including group headers. */
+  /** Rendered rows, including header and spacer rows. */
   readonly rows: readonly PaletteRow[];
-  /** Options handed to the native select, including group headers. */
-  readonly options: readonly PaletteSelectOption[];
   /** Number of commands that survived filtering. */
   readonly matchCount: number;
-  /** Option window height for the native select. */
+  /** Visible row window used as the page-step size. */
   readonly optionRows: number;
+  /** Height the result list needs, capped by the viewport and the documented maximum. */
+  readonly listHeight: number;
   /** Highlighted row index, always a selectable command row. */
   readonly highlightedIndex: number;
   /**
@@ -44,11 +40,11 @@ export interface PaletteView {
   /** Puts the highlight on the last selectable command row. */
   readonly moveToLast: () => void;
   /**
-   * Records the option the native select reports.
+   * Puts the highlight on one rendered row, resolving headers and spacers to a command.
    *
-   * @param value - Encoded option value.
+   * @param index - Requested row index.
    */
-  readonly highlightOption: (value: string) => void;
+  readonly highlightRow: (index: number) => void;
 }
 
 /**
@@ -56,8 +52,9 @@ export interface PaletteView {
  *
  * The rows are rebuilt only when the query, the captured entries, the recents, or the measured text
  * budget change, so typing never re-derives a command target. The highlight is resolved through
- * `resolveSelectableIndex`, so it always names a command row even while the rows carry group
- * headers.
+ * `resolveSelectableIndex`, so it always names a command row even while the rows carry header and
+ * spacer rows. The list height is the rendered row height, so a custom list never reserves the two
+ * lines a command row needs for a one-line header.
  *
  * @param entries - Captured palette entries.
  * @param recentCommandIds - Session recents captured at open time.
@@ -85,7 +82,7 @@ export function usePaletteView(
   );
   const selectableIndex = resolveSelectableIndex(rows.rows, highlightedIndex);
   const optionRows = clampOptionRows(size.visibleRows);
-  const options = useMemo(() => rows.rows.map((row) => row.option), [rows.rows]);
+  const listHeight = rows.matchCount === 0 ? 0 : readListHeight(rows.rows, optionRows);
 
   /** Replaces the query and resets the highlight to the first match. */
   const setQuery = useCallback((value: string): void => {
@@ -111,14 +108,10 @@ export function usePaletteView(
     setHighlightedIndex(resolveSelectableIndex(rows.rows, rows.rows.length - 1));
   }, [rows.rows]);
 
-  /** Records the option the native select reports. */
-  const highlightOption = useCallback(
-    (value: string): void => {
-      const index = rows.rows.findIndex((row) => row.option.value === value);
-
-      if (index !== -1) {
-        setHighlightedIndex(index);
-      }
+  /** Puts the highlight on one rendered row, resolving headers and spacers to a command. */
+  const highlightRow = useCallback(
+    (index: number): void => {
+      setHighlightedIndex(resolveSelectableIndex(rows.rows, index));
     },
     [rows.rows],
   );
@@ -127,23 +120,39 @@ export function usePaletteView(
     query,
     setQuery,
     rows: rows.rows,
-    options,
     matchCount: rows.matchCount,
     optionRows,
+    listHeight,
     highlightedIndex: selectableIndex,
     move,
     moveToFirst,
     moveToLast,
-    highlightOption,
+    highlightRow,
   };
 }
 
 /**
- * Clamps the option window to the measured rows and the documented bounds.
+ * Clamps the visible row window to the measured rows and the documented bounds.
  *
  * @param visibleRows - Rows the terminal leaves for content.
- * @returns The select height.
+ * @returns The page-step and height ceiling.
  */
 function clampOptionRows(visibleRows: number): number {
   return Math.max(PALETTE_MIN_OPTION_ROWS, Math.min(visibleRows, PALETTE_MAX_OPTION_ROWS));
+}
+
+/**
+ * Reads the rendered height the result list needs.
+ *
+ * A header and a spacer occupy one row, and a command occupies its name and description lines. The
+ * height never exceeds the visible window, so the list scrolls instead of growing the modal.
+ *
+ * @param rows - Rendered palette rows.
+ * @param visibleRows - Visible row window.
+ * @returns The list height in rows.
+ */
+function readListHeight(rows: readonly PaletteRow[], visibleRows: number): number {
+  const contentRows = rows.reduce((total, row) => total + (row.kind === "command" ? 2 : 1), 0);
+
+  return Math.max(PALETTE_MIN_OPTION_ROWS, Math.min(contentRows, visibleRows));
 }

@@ -18,8 +18,11 @@ const PATHS_HELPER_PATH = "src/lib/paths.ts";
 /** Repository path of the only module allowed to perform network calls. */
 export const UPDATE_CHECK_PATH = "src/domain/update/update.check.ts";
 
-/** Repository path of the only module allowed to define hex colors. */
-export const THEME_COLORS_PATH = "src/domain/theme/theme.catppuccin.ts";
+/** Repository path of the only directory allowed to define theme palette hex colors. */
+export const THEME_PALETTE_PREFIX = "src/domain/theme/themes/";
+
+/** Repository paths outside the palette directory that may define hex colors. */
+export const THEME_COLOR_PATHS: ReadonlySet<string> = new Set(["src/domain/theme/theme.mono.ts"]);
 
 /** Repository path prefix of the config modules. */
 export const CONFIG_MODULE_PREFIX = "src/domain/config/";

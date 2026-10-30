@@ -8,7 +8,7 @@ import { useFocusState } from "@/app/hooks/useFocusState";
 import { useHotkeys } from "@/app/hooks/useHotkeys";
 import { useOverlay } from "@/app/hooks/useOverlay";
 import { useStatus } from "@/app/hooks/useStatus";
-import { DEFAULT_THEME_NAME, THEME_FLAVORS } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME, THEMES } from "@/domain/theme/theme.registry";
 import { OverlayHost } from "@/features/overlays/OverlayHost";
 import { ShellTestProviders } from "@/test/shell.harness";
 import { ModalActions } from "@/ui/ModalActions";
@@ -201,7 +201,7 @@ function expectActionFocused(
   text: string,
   focused: boolean,
 ): void {
-  const tokens = THEME_FLAVORS[DEFAULT_THEME_NAME].tokens;
+  const tokens = THEMES[DEFAULT_THEME_NAME].tokens;
   const expected = focused ? tokens.selection : tokens.border;
   const span = findSpanContaining(setup.captureSpans(), text);
 

@@ -6,7 +6,6 @@ import { useStatus } from "@/app/hooks/useStatus";
 import { describeCommandReason } from "@/domain/commands/commands.reasons";
 import type { CommandDescriptor } from "@/domain/commands/commands.types";
 import { PALETTE_SELF_COMMAND_IDS } from "@/features/palette/CommandPalette.constants";
-import { decodePaletteValue } from "@/features/palette/CommandRow";
 import type { PaletteCommandEntry, PaletteRow } from "@/features/palette/CommandRow.types";
 import { recordRecentCommand } from "@/features/palette/palette.search";
 import { captureCommandTarget } from "@/features/palette/palette.targets";
@@ -154,11 +153,11 @@ export function usePaletteDispatch(
     (rows: readonly PaletteRow[], selectableIndex: number): void => {
       const row = rows[selectableIndex];
 
-      if (row === undefined || row.value.kind !== "command") {
+      if (row === undefined || row.kind !== "command") {
         return;
       }
 
-      const commandId = row.value.commandId;
+      const commandId = row.commandId;
       const entry = entries.find((candidate) => candidate.descriptor.id === commandId);
 
       if (entry !== undefined) {
@@ -168,25 +167,7 @@ export function usePaletteDispatch(
     [activateEntry, entries],
   );
 
-  /** Activates the option value reported by the native select. */
-  const selectValue = useCallback(
-    (value: string): void => {
-      const decoded = decodePaletteValue(value);
-
-      if (decoded?.kind !== "command") {
-        return;
-      }
-
-      const entry = entries.find((candidate) => candidate.descriptor.id === decoded.commandId);
-
-      if (entry !== undefined) {
-        activateEntry(entry);
-      }
-    },
-    [activateEntry, entries],
-  );
-
-  return { activate, selectValue };
+  return { activate };
 }
 
 /**

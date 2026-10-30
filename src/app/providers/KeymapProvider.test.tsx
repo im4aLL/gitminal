@@ -10,6 +10,7 @@ import type { GitminalConfig } from "@/domain/config/config.types";
 import { ACTION_CATALOGUE } from "@/domain/keymap/keymap.defaults";
 import { bindingKey } from "@/domain/keymap/keymap.parse";
 import type { KeymapPlatform, ResolvedKeymap } from "@/domain/keymap/keymap.types";
+import { createBuiltInCatalogue } from "@/domain/theme/theme.catalogue";
 import { readGuardError, renderGuard } from "@/test/react.guard";
 
 /** Latest keymap rendered by the probe. */
@@ -115,6 +116,7 @@ describe("KeymapProvider", () => {
       warnings: [],
       keybindingsFile: { "app.refresh": ["z"], "app.help": ["f3"] },
       themeOverrides: null,
+      catalogue: createBuiltInCatalogue(),
     };
     latest = undefined;
 

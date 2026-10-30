@@ -17,6 +17,7 @@ import type {
 import { DEFAULT_CONFIG_SNAPSHOT } from "@/app/providers/config.source";
 import { DEFAULT_CONFIG, UNRESOLVED_CONFIG_PATHS } from "@/domain/config/config.defaults";
 import { boundConfigWarnings } from "@/domain/config/config.warnings";
+import { createBuiltInCatalogue } from "@/domain/theme/theme.catalogue";
 
 /** Context carrying the resolved configuration. */
 export const ConfigContext = createContext<ConfigContextValue | null>(null);
@@ -45,7 +46,7 @@ export function ConfigProvider(props: ConfigProviderProps): ReactNode {
   /** Re-reads the files and applies a valid result in place. */
   const reload = useCallback(async (): Promise<ConfigReloadResult> => {
     if (props.source === undefined) {
-      return { ok: true, warnings: [] };
+      return { ok: true, theme: latest.current.config.theme, warnings: [] };
     }
 
     return await reloadFromSource(props.source.load, latest.current, setSnapshot);
@@ -60,6 +61,7 @@ export function ConfigProvider(props: ConfigProviderProps): ReactNode {
       warnings: snapshot.warnings,
       keybindingsFile: snapshot.keybindingsFile,
       themeOverrides: snapshot.themeOverrides,
+      catalogue: snapshot.catalogue,
       reload,
     }),
     [snapshot, reload],
@@ -99,6 +101,7 @@ function readInitialSnapshot(props: ConfigProviderProps): ConfigSnapshot {
     warnings: Object.freeze([...(props.initialWarnings ?? [])]),
     keybindingsFile: Object.freeze({}),
     themeOverrides: null,
+    catalogue: createBuiltInCatalogue(),
   };
 }
 
@@ -112,7 +115,7 @@ function readInitialSnapshot(props: ConfigProviderProps): ConfigSnapshot {
  * @param load - Source loader.
  * @param previous - Snapshot the session is currently running with.
  * @param store - Snapshot state setter.
- * @returns Whether the reload applied, plus the resulting warnings.
+ * @returns Whether the reload applied, the effective theme name, and the resulting warnings.
  */
 async function reloadFromSource(
   load: ConfigSource["load"],
@@ -129,18 +132,18 @@ async function reloadFromSource(
 
     store(keepPrevious(previous, warnings));
 
-    return { ok: false, warnings };
+    return { ok: false, theme: previous.config.theme, warnings };
   }
 
   if (next.status !== "rejected") {
     store(next);
 
-    return { ok: true, warnings: next.warnings };
+    return { ok: true, theme: next.config.theme, warnings: next.warnings };
   }
 
   store(keepPrevious(previous, next.warnings));
 
-  return { ok: false, warnings: next.warnings };
+  return { ok: false, theme: previous.config.theme, warnings: next.warnings };
 }
 
 /**
@@ -159,5 +162,6 @@ function keepPrevious(previous: ConfigSnapshot, warnings: readonly string[]): Co
     warnings,
     keybindingsFile: previous.keybindingsFile,
     themeOverrides: previous.themeOverrides,
+    catalogue: previous.catalogue,
   };
 }

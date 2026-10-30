@@ -29,39 +29,32 @@ export interface PaletteCommandEntry {
   readonly shortcut: string;
 }
 
-/** One option passed to the native select. */
-export interface PaletteSelectOption {
-  /** Option name, carrying the category prefix and the effective shortcut. */
-  readonly name: string;
-  /** Command description, or the exact disabled reason when unavailable. */
-  readonly description: string;
-  /** JSON-encoded `PaletteOptionValue`. */
-  readonly value: string;
-}
-
-/** A decoded option value. A group row is a visual header, never a command. */
-export type PaletteOptionValue =
+/**
+ * One rendered palette row.
+ *
+ * A header is a full-width band naming its category, a spacer is the blank row that separates two
+ * groups, and a command row carries the runnable payload plus its already-budgeted display text.
+ * Only a command row is selectable.
+ */
+export type PaletteRow =
+  | {
+      readonly kind: "header";
+      readonly category: PaletteCategory;
+      readonly label: string;
+    }
+  | { readonly kind: "spacer"; readonly category: PaletteCategory }
   | {
       readonly kind: "command";
       readonly commandId: string;
       readonly target: CommandTarget;
-    }
-  | { readonly kind: "group" };
+      readonly name: string;
+      readonly description: string;
+    };
 
-/** One rendered palette row. */
-export interface PaletteRow {
-  /** Decoded value carried by the select option. */
-  readonly value: PaletteOptionValue;
-  /** Option rendered by the native select. */
-  readonly option: PaletteSelectOption;
-}
-
-/** Input accepted by `buildCommandOption`. */
-export interface CommandOptionInput {
+/** Input accepted by `buildCommandRow`. */
+export interface CommandRowInput {
   /** Captured command entry. */
   readonly entry: PaletteCommandEntry;
-  /** Group the row is rendered under. */
-  readonly category: PaletteCategory;
   /** Characters available on one rendered line. */
   readonly textBudget: number;
 }

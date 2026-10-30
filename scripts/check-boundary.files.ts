@@ -3,7 +3,8 @@ import ts from "typescript";
 import {
   FORBIDDEN_FILE_NAMES,
   HEX_COLOR_PATTERN,
-  THEME_COLORS_PATH,
+  THEME_COLOR_PATHS,
+  THEME_PALETTE_PREFIX,
 } from "./check-boundary.constants";
 import {
   type Diagnostic,
@@ -48,13 +49,27 @@ function isBarrelFile(baseName: string): boolean {
 }
 
 /**
- * Flags hex color literals outside the Catppuccin token module.
+ * Reports whether a repository path may define theme hex colors.
+ *
+ * Only the palette modules under the theme directory and the monochrome palette module may hold
+ * color literals, so every theme owns its colors in its own file while the rest of the app stays
+ * color-free.
+ *
+ * @param relative - Repository-relative file path.
+ * @returns True when the file is a theme color module.
+ */
+function isThemeColorPath(relative: string): boolean {
+  return relative.startsWith(THEME_PALETTE_PREFIX) || THEME_COLOR_PATHS.has(relative);
+}
+
+/**
+ * Flags hex color literals outside the theme palette modules.
  *
  * @param sourceFile - The parsed source file.
  * @param errors - Finding accumulator.
  */
 export function checkHexColors(sourceFile: ts.SourceFile, errors: Diagnostic[]): void {
-  if (toRepoPath(sourceFile.fileName) === THEME_COLORS_PATH) {
+  if (isThemeColorPath(toRepoPath(sourceFile.fileName))) {
     return;
   }
 
@@ -66,7 +81,7 @@ export function checkHexColors(sourceFile: ts.SourceFile, errors: Diagnostic[]):
         diagnosticAt(
           sourceFile,
           node,
-          "hex color literals are allowed only in src/domain/theme/theme.catppuccin.ts",
+          "hex color literals are allowed only in src/domain/theme/themes/ and src/domain/theme/theme.mono.ts",
         ),
       );
     }

@@ -9,7 +9,7 @@ import { useOverlay } from "@/app/hooks/useOverlay";
 import { registerCommandHandler, resetCommandRunner } from "@/domain/commands/commands.runner";
 import type { CommandRequest } from "@/domain/commands/commands.types";
 import type { TagRowRecord } from "@/domain/git/git.types";
-import { DEFAULT_THEME_NAME, THEME_FLAVORS } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME, THEMES } from "@/domain/theme/theme.registry";
 import { DeleteTagModal } from "@/features/tags/DeleteTagModal";
 import {
   DELETE_TAG_REMOTE_SELECT_ID,
@@ -96,7 +96,7 @@ function expectActionFocused(
   text: string,
   focused: boolean,
 ): void {
-  const tokens = THEME_FLAVORS[DEFAULT_THEME_NAME].tokens;
+  const tokens = THEMES[DEFAULT_THEME_NAME].tokens;
   const expected = focused ? tokens.selection : tokens.border;
   const frame = setup.captureSpans();
   let found: { bg: RGBA } | undefined;

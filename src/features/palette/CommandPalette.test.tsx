@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, type Mock, mock } from "bun:test";
-import type { SelectRenderable } from "@opentui/core";
+import { type BoxRenderable, RGBA } from "@opentui/core";
 import { testRender } from "@opentui/react/test-utils";
 import { act, type ReactNode, useEffect, useRef, useState } from "react";
 import { resetActionRegistry, resolveActionHandler, useAction } from "@/app/hooks/useAction";
@@ -7,12 +7,13 @@ import { useFocusRegion } from "@/app/hooks/useFocusRegion";
 import { useFocusState } from "@/app/hooks/useFocusState";
 import { useRepository } from "@/app/hooks/useRepository";
 import { useStatus } from "@/app/hooks/useStatus";
+import { DEFAULT_THEME_NAME, THEMES } from "@/domain/theme/theme.registry";
 import { CommandPalette } from "@/features/palette/CommandPalette";
 import {
+  PALETTE_LIST_ID,
+  PALETTE_ROW_ID_PREFIX,
   PALETTE_SEARCH_INPUT_ID,
-  PALETTE_SELECT_ID,
 } from "@/features/palette/CommandPalette.constants";
-import { decodePaletteValue } from "@/features/palette/CommandRow";
 import { resetRecentCommands } from "@/features/palette/palette.search";
 import { PALETTE_HIDDEN_SURFACE_MESSAGE } from "@/features/palette/palette.targets.constants";
 import { AppTestProviders } from "@/test/app.harness";
@@ -248,7 +249,7 @@ async function renderPalette(
     { width: 100, height: 30 },
   );
 
-  await waitFor(setup, () => findSelect(setup) !== undefined);
+  await waitFor(setup, () => findList(setup) !== undefined);
   await act(async () => {
     setup.renderer.root.findDescendantById("region-branches")?.focus();
     await setup.renderOnce();
@@ -258,36 +259,61 @@ async function renderPalette(
 }
 
 /**
- * Finds the palette result select.
+ * Finds the palette result list.
  *
  * @param setup - Renderer setup.
- * @returns The native select, or undefined before the palette mounts.
+ * @returns The result scrollbox, or undefined before the palette mounts.
  */
-function findSelect(setup: Awaited<ReturnType<typeof testRender>>): SelectRenderable | undefined {
-  return setup.renderer.root.findDescendantById(PALETTE_SELECT_ID) as SelectRenderable | undefined;
+function findList(setup: Awaited<ReturnType<typeof testRender>>) {
+  return setup.renderer.root.findDescendantById(PALETTE_LIST_ID);
 }
 
 /**
- * Selects one option by its name fragment and flushes the render.
+ * Narrows the palette to one command and runs the highlighted result.
  *
  * @param setup - Renderer setup.
- * @param fragment - Name fragment of the option to activate.
+ * @param query - Search text that isolates the command.
  */
-async function selectOption(
+async function runCommand(
   setup: Awaited<ReturnType<typeof testRender>>,
-  fragment: string,
+  query: string,
 ): Promise<void> {
+  const input = setup.renderer.root.findDescendantById(PALETTE_SEARCH_INPUT_ID) as
+    | { focus: () => void }
+    | undefined;
+
   await act(async () => {
-    const select = findSelect(setup);
-    const index = select?.options.findIndex((option) => option.name.includes(fragment)) ?? -1;
-
-    if (select !== undefined && index >= 0) {
-      select.setSelectedIndex(index);
-      select.selectCurrent();
-    }
-
+    input?.focus();
+    await setup.mockInput.typeText(query);
     await setup.renderOnce();
   });
+  await act(async () => {
+    resolveActionHandler("nav.activate", "overlay")?.();
+    await setup.renderOnce();
+  });
+}
+
+/**
+ * Reads the rendered ids of the command rows in document order.
+ *
+ * @param setup - Renderer setup.
+ * @returns Command row ids, first to last.
+ */
+function readCommandRowIds(setup: Awaited<ReturnType<typeof testRender>>): readonly string[] {
+  const ids: string[] = [];
+  const visit = (node: { readonly id?: string; getChildren?: () => readonly unknown[] }): void => {
+    if (node.id?.startsWith(`${PALETTE_ROW_ID_PREFIX}:`) === true) {
+      ids.push(node.id);
+    }
+
+    for (const child of node.getChildren?.() ?? []) {
+      visit(child as { readonly id?: string; getChildren?: () => readonly unknown[] });
+    }
+  };
+
+  visit(setup.renderer.root);
+
+  return ids;
 }
 
 /**
@@ -325,8 +351,23 @@ describe("CommandPalette rendering", () => {
 
     expect(frame).toContain("Command palette");
     expect(frame).toContain("Search commands");
-    expect(frame).toContain("-- App --");
+    expect(frame).toContain("App");
     expect(frame).toContain("Run");
+
+    const tokens = THEMES[DEFAULT_THEME_NAME].tokens;
+    const spans = setup.captureSpans();
+    const headerLine = spans.lines.find((line) =>
+      line.spans.some((span) => span.text.includes("App")),
+    );
+    const header = headerLine?.spans.find((span) => span.text.includes("App"));
+    const panelCells =
+      headerLine?.spans
+        .filter((span) => span.bg.equals(RGBA.fromHex(tokens.panel)))
+        .reduce((total, span) => total + span.text.length, 0) ?? 0;
+
+    expect(header?.fg.equals(RGBA.fromHex(tokens.text))).toBe(true);
+    expect(header?.bg.equals(RGBA.fromHex(tokens.panel))).toBe(true);
+    expect(panelCells).toBeLessThan(10);
     expect(frame).toContain("Close");
     expect(frame).toContain("Next field");
 
@@ -359,7 +400,7 @@ describe("CommandPalette dispatch", () => {
   it("dispatches an available command once and closes", async () => {
     const { setup, onClose, onRefresh } = await renderPalette(true);
 
-    await selectOption(setup, "Refresh");
+    await runCommand(setup, "Refresh");
     await waitFor(setup, () => onRefresh.mock.calls.length === 1);
 
     expect(onRefresh).toHaveBeenCalledTimes(1);
@@ -374,7 +415,7 @@ describe("CommandPalette dispatch", () => {
   it("keeps a captured-unavailable command inert and the palette open", async () => {
     const { setup, onClose, onRefresh } = await renderPalette(true);
 
-    await selectOption(setup, "Delete branch");
+    await runCommand(setup, "Delete branch");
 
     expect(onClose).not.toHaveBeenCalled();
     expect(onRefresh).not.toHaveBeenCalled();
@@ -411,7 +452,7 @@ describe("CommandPalette dispatch", () => {
     await act(async () => {
       latestFocus?.setCursor("branches", "main");
     });
-    await selectOption(setup, "Checkout branch");
+    await runCommand(setup, "Checkout branch");
     await waitFor(setup, () => setup.renderer.currentFocusedRenderable?.id === "region-branches");
 
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -426,7 +467,7 @@ describe("CommandPalette dispatch", () => {
   it("requests owning-region focus in the close completion when the owning handler is missing", async () => {
     const { setup, onClose } = await renderPalette(false, "feature");
 
-    await selectOption(setup, "Checkout branch");
+    await runCommand(setup, "Checkout branch");
     await waitFor(setup, () => setup.renderer.currentFocusedRenderable?.id === "region-branches");
 
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -450,7 +491,7 @@ describe("CommandPalette dispatch", () => {
       { width: 100, height: 30 },
     );
 
-    await waitFor(setup, () => findSelect(setup) !== undefined);
+    await waitFor(setup, () => findList(setup) !== undefined);
     await act(async () => {
       setup.renderer.root.findDescendantById("region-graph")?.focus();
       await setup.renderOnce();
@@ -458,13 +499,13 @@ describe("CommandPalette dispatch", () => {
 
     expect(setup.renderer.currentFocusedRenderable?.id).toBe("region-graph");
 
-    await selectOption(setup, "Checkout branch");
+    await runCommand(setup, "Checkout branch");
     await waitFor(setup, () => setup.renderer.currentFocusedRenderable?.id === "region-branches");
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onClose.mock.calls[0]?.[0]).toBeFunction();
     expect(latestStatus?.message).toBe(PALETTE_HIDDEN_SURFACE_MESSAGE);
-    expect(findSelect(setup)).toBeUndefined();
+    expect(findList(setup)).toBeUndefined();
     expect(setup.renderer.currentFocusedRenderable?.id).toBe("region-branches");
 
     await act(async () => {
@@ -474,26 +515,59 @@ describe("CommandPalette dispatch", () => {
 
   it("moves to the first and last result through nav.first and nav.last", async () => {
     const { setup } = await renderPalette(true);
-    const select = findSelect(setup);
-    const commandIndexes = (select?.options ?? []).flatMap((option, index) =>
-      decodePaletteValue(option.value)?.kind === "command" ? [index] : [],
-    );
-    const first = commandIndexes[0];
-    const last = commandIndexes.at(-1);
+    const tokens = THEMES[DEFAULT_THEME_NAME].tokens;
+    const selectedFill = RGBA.fromHex(tokens.surface);
+    const rowIds = readCommandRowIds(setup);
+
+    expect(rowIds.length).toBeGreaterThan(1);
 
     await act(async () => {
       resolveActionHandler("nav.last", "overlay")?.();
       await setup.renderOnce();
     });
 
-    expect(findSelect(setup)?.getSelectedIndex()).toBe(last);
+    const last = setup.renderer.root.findDescendantById(rowIds.at(-1) ?? "") as
+      | BoxRenderable
+      | undefined;
+
+    expect(last?.backgroundColor.equals(selectedFill)).toBe(true);
 
     await act(async () => {
       resolveActionHandler("nav.first", "overlay")?.();
       await setup.renderOnce();
     });
 
-    expect(findSelect(setup)?.getSelectedIndex()).toBe(first);
+    const first = setup.renderer.root.findDescendantById(rowIds[0] ?? "") as
+      | BoxRenderable
+      | undefined;
+
+    expect(first?.backgroundColor.equals(selectedFill)).toBe(true);
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("scrolls the result list with the wheel without moving the highlight", async () => {
+    const { setup } = await renderPalette(true);
+    const list = findList(setup) as unknown as { scrollTop: number } | undefined;
+    const renderer = setup.renderer as unknown as {
+      dispatchMouseEvent: (target: unknown, attributes: unknown) => void;
+    };
+
+    await act(async () => {
+      renderer.dispatchMouseEvent(findList(setup), {
+        type: "scroll",
+        button: 0,
+        x: 0,
+        y: 0,
+        modifiers: { shift: false, alt: false, ctrl: false },
+        scroll: { direction: "down", delta: 1 },
+      });
+      await setup.renderOnce();
+    });
+
+    expect(list?.scrollTop).toBeGreaterThan(0);
 
     await act(async () => {
       await setup.dispose();

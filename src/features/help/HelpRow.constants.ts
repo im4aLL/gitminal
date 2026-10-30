@@ -8,7 +8,10 @@ export const HELP_LABEL_BUDGET = 26;
 export const HELP_DETAIL_MIN_BUDGET = 12;
 
 /** Columns the row layout spends outside the name and key cells: marker, gaps, and padding. */
-export const HELP_ROW_SPACING = 4;
+export const HELP_ROW_SPACING = 5;
+
+/** Blank columns between the leading selection marker and the row content. */
+export const HELP_ROW_CONTENT_INSET = 1;
 
 /** Separator between the effective keys of one action. */
 export const HELP_KEY_SEPARATOR = ", ";

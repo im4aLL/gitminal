@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import type { SelectRenderable } from "@opentui/core";
 import { testRender } from "@opentui/react/test-utils";
 import { act, type ReactNode } from "react";
 import { resetActionRegistry, resolveActionHandler } from "@/app/hooks/useAction";
@@ -18,7 +17,10 @@ import {
   HELP_TOGGLE_ACTION_ID,
 } from "@/features/help/HelpModal.constants";
 import { OverlayHost } from "@/features/overlays/OverlayHost";
-import { PALETTE_SELECT_ID } from "@/features/palette/CommandPalette.constants";
+import {
+  PALETTE_ROW_ID_PREFIX,
+  PALETTE_SEARCH_INPUT_ID,
+} from "@/features/palette/CommandPalette.constants";
 import { AppTestProviders } from "@/test/app.harness";
 import { createFakeGitClient } from "@/test/git.fake";
 
@@ -158,21 +160,105 @@ async function closePalette(setup: Awaited<ReturnType<typeof testRender>>): Prom
 }
 
 /**
- * Reads the palette option for one command.
+ * Narrows the open palette to one query and settles the frame.
  *
  * @param setup - Renderer setup.
- * @param label - Command label the option name must contain.
- * @returns The rendered option, or undefined when the palette does not render it.
+ * @param query - Search text to enter.
+ */
+async function searchPalette(
+  setup: Awaited<ReturnType<typeof testRender>>,
+  query: string,
+): Promise<void> {
+  const input = setup.renderer.root.findDescendantById(PALETTE_SEARCH_INPUT_ID) as
+    | { focus: () => void; value: string }
+    | undefined;
+
+  await act(async () => {
+    input?.focus();
+
+    const previousLength = input?.value.length ?? 0;
+
+    for (let index = 0; index < previousLength; index += 1) {
+      setup.mockInput.pressBackspace();
+    }
+
+    if (query.length > 0) {
+      await setup.mockInput.typeText(query);
+    }
+  });
+
+  // The scrollbox repaints its custom rows over later frames, so read them after it settles.
+  for (let frame = 0; frame < 6; frame += 1) {
+    await act(async () => {
+      await setup.renderOnce();
+    });
+  }
+}
+
+/**
+ * Reads the rendered palette row for one command.
+ *
+ * @param setup - Renderer setup.
+ * @param label - Command label the rendered row name must contain.
+ * @returns The row text, or undefined when the palette does not render it.
  */
 function readOption(
   setup: Awaited<ReturnType<typeof testRender>>,
   label: string,
 ): { readonly name: string; readonly description: string } | undefined {
-  const select = setup.renderer.root.findDescendantById(PALETTE_SELECT_ID) as
-    | SelectRenderable
-    | undefined;
+  const visit = (node: {
+    readonly id?: string;
+    getChildren?: () => readonly unknown[];
+  }): { readonly name: string; readonly description: string } | undefined => {
+    if (node.id?.startsWith(`${PALETTE_ROW_ID_PREFIX}:`) === true) {
+      const texts: string[] = [];
+      const collectText = (child: {
+        readonly plainText?: string;
+        getChildren?: () => readonly unknown[];
+      }): void => {
+        if (child.plainText !== undefined) {
+          texts.push(child.plainText);
+        }
 
-  return select?.options.find((option) => option.name.includes(label));
+        for (const grandchild of child.getChildren?.() ?? []) {
+          collectText(
+            grandchild as {
+              readonly plainText?: string;
+              getChildren?: () => readonly unknown[];
+            },
+          );
+        }
+      };
+
+      collectText(node as { readonly plainText?: string });
+
+      // `ListRow` renders its one-cell selection marker as the first text child.
+      if (texts[0]?.length === 1) {
+        texts.shift();
+      }
+
+      const name = texts[0]?.trim() ?? "";
+      const description = texts[1]?.trim() ?? "";
+
+      return name.includes(label) ? { name, description } : undefined;
+    }
+
+    for (const child of node.getChildren?.() ?? []) {
+      const found = visit(
+        child as { readonly id?: string; getChildren?: () => readonly unknown[] },
+      );
+
+      if (found !== undefined) {
+        return found;
+      }
+    }
+
+    return undefined;
+  };
+
+  return visit(
+    setup.renderer.root as unknown as { id?: string; getChildren?: () => readonly unknown[] },
+  );
 }
 
 beforeEach(() => {
@@ -218,6 +304,7 @@ describe("useHelpAction", () => {
     const setup = await renderDiscovery();
 
     await runGlobalAction(setup, "app.palette");
+    await searchPalette(setup, "Delete branch");
 
     const option = readOption(setup, "Delete branch");
     const keymap = latestKeymap as ResolvedKeymap;

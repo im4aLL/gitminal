@@ -153,13 +153,14 @@ function parseJsonFile(key: ConfigFileKey, filePath: string, content: string): C
  * Default reader backed by `fs/promises`.
  *
  * It stats the file first, so a file over the cap fails with the bounded reason before any content
- * is buffered.
+ * is buffered. The configuration loader and the themes directory scan share it, so one stat-before-
+ * read rule caps both sources.
  *
  * @param filePath - Absolute path to read.
  * @returns The file content as text.
  * @throws When the file exceeds the cap or the read fails.
  */
-async function nodeFileReader(filePath: string): Promise<string> {
+export async function nodeFileReader(filePath: string): Promise<string> {
   const details = await stat(filePath);
 
   if (details.size > MAX_CONFIG_FILE_BYTES) {

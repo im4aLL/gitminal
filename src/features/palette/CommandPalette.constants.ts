@@ -4,8 +4,11 @@ export const PALETTE_OVERLAY_ID = "command-palette";
 /** Stable renderable id of the palette search input. */
 export const PALETTE_SEARCH_INPUT_ID = "palette-search";
 
-/** Stable renderable id of the palette result select. */
-export const PALETTE_SELECT_ID = "palette-results";
+/** Stable renderable id of the palette result list. */
+export const PALETTE_LIST_ID = "palette-results";
+
+/** Prefix of the renderable id of one rendered palette row. */
+export const PALETTE_ROW_ID_PREFIX = "palette-row";
 
 /** Modal title. */
 export const PALETTE_TITLE = "Command palette";

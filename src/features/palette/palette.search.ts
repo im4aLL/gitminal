@@ -1,9 +1,5 @@
 import { PALETTE_RECENT_LIMIT } from "@/features/palette/CommandPalette.constants";
-import {
-  buildCommandOption,
-  buildGroupOption,
-  readCommandOptionValue,
-} from "@/features/palette/CommandRow";
+import { buildCommandRow, buildHeaderRow, buildSpacerRow } from "@/features/palette/CommandRow";
 import type {
   PaletteCategory,
   PaletteCommandEntry,
@@ -42,7 +38,8 @@ function filterPaletteEntries(
  *
  * An empty query shows the session recents group first and then every command grouped by category.
  * A non-empty query shows only matching commands, still grouped by category. Every group starts with
- * a header row, and each command option carries the category as a name prefix.
+ * a header row, and each command option carries the category as a name prefix. Every header after
+ * the first is preceded by a blank spacer row, so the groups read as separate blocks.
  *
  * @param input - Captured commands, query, recents, and text budget.
  * @returns The rows plus the match count that drives the empty state.
@@ -60,7 +57,7 @@ export function buildPaletteRows(input: BuildPaletteRowsInput): PaletteRows {
     );
 
     return {
-      rows: [...recentRows, ...catalogueRows],
+      rows: spaceGroupHeaders([...recentRows, ...catalogueRows]),
       matchCount: input.entries.length,
     };
   }
@@ -68,7 +65,9 @@ export function buildPaletteRows(input: BuildPaletteRowsInput): PaletteRows {
   const matching = filterPaletteEntries(input.entries, input.query);
 
   return {
-    rows: groupByCategory(matching, (entry) => entry.descriptor.category, input.textBudget),
+    rows: spaceGroupHeaders(
+      groupByCategory(matching, (entry) => entry.descriptor.category, input.textBudget),
+    ),
     matchCount: matching.length,
   };
 }
@@ -180,17 +179,34 @@ function groupByCategory(
 
   return order.flatMap((category) => {
     const group = groups.get(category) ?? [];
-    const header: PaletteRow = {
-      value: { kind: "group" },
-      option: buildGroupOption(category, textBudget),
-    };
-    const rows = group.map<PaletteRow>((entry) => ({
-      value: readCommandOptionValue(entry),
-      option: buildCommandOption({ entry, category, textBudget }),
-    }));
+    const header = buildHeaderRow(category, textBudget);
+    const rows = group.map((entry) => buildCommandRow({ entry, textBudget }));
 
     return [header, ...rows];
   });
+}
+
+/**
+ * Inserts one blank row before every group header except the first.
+ *
+ * The first header stays flush with the top of the list, so the modal opens without a leading gap.
+ * Every later header gets one blank spacer row, so the groups read as separate blocks.
+ *
+ * @param rows - Header and command rows in group order.
+ * @returns The rows with a spacer ahead of each header after the first.
+ */
+function spaceGroupHeaders(rows: readonly PaletteRow[]): readonly PaletteRow[] {
+  const spaced: PaletteRow[] = [];
+
+  for (const row of rows) {
+    if (row.kind === "header" && spaced.length > 0) {
+      spaced.push(buildSpacerRow(row.category));
+    }
+
+    spaced.push(row);
+  }
+
+  return spaced;
 }
 
 /**
@@ -280,6 +296,6 @@ export function moveSelectableIndex(
  */
 function isCommandRow(
   row: PaletteRow | undefined,
-): row is PaletteRow & { readonly value: { readonly kind: "command" } } {
-  return row?.value.kind === "command";
+): row is Extract<PaletteRow, { readonly kind: "command" }> {
+  return row?.kind === "command";
 }

@@ -5,11 +5,12 @@ import { join } from "node:path";
 import { loadConfigFiles, MAX_CONFIG_FILE_BYTES } from "@/domain/config/config.loader";
 import type { ConfigFilePaths, ConfigFileReader } from "@/domain/config/config.types";
 
-/** The three resolved paths used by the cases. */
+/** The three resolved paths and the themes directory used by the cases. */
 const PATHS: ConfigFilePaths = Object.freeze({
   config: "/cfg/config.json",
   keybindings: "/cfg/keybindings.json",
   theme: "/cfg/theme.json",
+  themesDir: "/cfg/themes",
 });
 
 /** Prefix kept outside the string so the colour is not written as a hex literal. */
@@ -126,7 +127,12 @@ describe("loadConfigFiles", () => {
 
       await writeFile(configPath, "x".repeat(MAX_CONFIG_FILE_BYTES + 1), "utf8");
 
-      const loaded = await loadConfigFiles({ config: configPath, keybindings: null, theme: null });
+      const loaded = await loadConfigFiles({
+        config: configPath,
+        keybindings: null,
+        theme: null,
+        themesDir: null,
+      });
 
       expect(loaded.files[0]?.status).toBe("failed");
       expect(loaded.warnings).toHaveLength(1);
@@ -139,7 +145,7 @@ describe("loadConfigFiles", () => {
   it("never reads an unresolved path", async () => {
     const read: string[] = [];
     const loaded = await loadConfigFiles(
-      { config: null, keybindings: null, theme: null },
+      { config: null, keybindings: null, theme: null, themesDir: null },
       {
         readFile: async (filePath: string): Promise<string> => {
           read.push(filePath);

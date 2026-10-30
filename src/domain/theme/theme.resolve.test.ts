@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { DEFAULT_THEME_NAME, getThemeFlavor, THEME_NAMES } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME, getThemeDefinition, THEME_NAMES } from "@/domain/theme/theme.registry";
 import { resolveTheme } from "@/domain/theme/theme.resolve";
 import type { HexColor, ThemeTokens } from "@/domain/theme/theme.types";
 
@@ -23,7 +23,7 @@ function color(digits: string): HexColor {
  * @returns The flavor tokens.
  */
 function baseTokens(name = DEFAULT_THEME_NAME): ThemeTokens {
-  return getThemeFlavor(name)?.tokens as ThemeTokens;
+  return getThemeDefinition(name)?.tokens as ThemeTokens;
 }
 
 describe("resolveTheme base selection", () => {

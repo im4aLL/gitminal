@@ -27,7 +27,7 @@ import { usePaletteView } from "@/features/palette/usePaletteView";
  * the overlay opens, and typing never re-derives a command target.
  *
  * @param options - Overlay close callback that accepts a post-restore completion.
- * @returns The options, highlight, hints, and select callbacks the view renders.
+ * @returns The rows, highlight, hints, and row callbacks the view renders.
  */
 export function useCommandPalette(options: UseCommandPaletteOptions): PaletteHandle {
   const capture = usePaletteCapture();
@@ -41,13 +41,16 @@ export function useCommandPalette(options: UseCommandPaletteOptions): PaletteHan
   return {
     query: view.query,
     setQuery: view.setQuery,
-    options: view.options,
+    rows: view.rows,
     highlightedIndex: view.highlightedIndex,
     matchCount: view.matchCount,
     optionRows: view.optionRows,
+    listHeight: view.listHeight,
     hints: readHintKeys(capture.keymap),
-    highlightOption: view.highlightOption,
-    selectValue: dispatch.selectValue,
+    highlightRow: view.highlightRow,
+    activateRow: (index: number) => {
+      dispatch.activate(view.rows, index);
+    },
   };
 }
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { type CapturedFrame, type CapturedSpan, RGBA } from "@opentui/core";
 import { testRender } from "@opentui/react/test-utils";
 import { act } from "react";
-import { DEFAULT_THEME_NAME, THEME_FLAVORS } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME, THEMES } from "@/domain/theme/theme.registry";
 import { TopBarActions } from "@/features/top-bar/TopBarActions";
 import type { TopBarControl, TopBarControlKind } from "@/features/top-bar/useTopBar.types";
 import { ShellTestProviders } from "@/test/shell.harness";
@@ -189,7 +189,7 @@ describe("TopBarActions", () => {
   });
 
   it("moves the focused background with the focused control kind and never adds a marker", async () => {
-    const tokens = THEME_FLAVORS[DEFAULT_THEME_NAME].tokens;
+    const tokens = THEMES[DEFAULT_THEME_NAME].tokens;
     const pullFocused = await captureActionSpans("pull");
 
     const pullSpan = findSpanContaining(pullFocused, ICONS.pull);

@@ -344,8 +344,9 @@ describe("Footer", () => {
 
     const frame = setup.captureCharFrame();
 
-    expect(frame).toContain("Move up");
-    expect(frame).toContain("Move down");
+    expect(frame).toContain("Up/Down/j/k Move");
+    expect(frame).not.toContain("Move up");
+    expect(frame).not.toContain("Move down");
     expect(frame).toContain("Search commits");
     expect(frame).not.toContain("Page up");
     expect(frame).not.toContain("Page down");
@@ -355,8 +356,8 @@ describe("Footer", () => {
     });
   });
 
-  it("keeps the diff scroll hints at 120 and 80 columns", async () => {
-    for (const width of [120, 80]) {
+  it("keeps every valid diff hint at 160 and the grouped hints when narrow", async () => {
+    for (const width of [160, 120, 80]) {
       resetActionRegistry();
 
       const setup = await renderFooter(
@@ -375,12 +376,26 @@ describe("Footer", () => {
 
       const frame = setup.captureCharFrame();
 
-      expect(frame).toContain("J Scroll down");
-      expect(frame).toContain("K Scroll up");
-      expect(frame).toContain("H Scroll left");
-      expect(frame).toContain("L Scroll right");
+      expect(frame).toContain("J/K/H/L Scroll");
+      expect(frame).toContain("Up/Down/j/k Move");
+      expect(frame).not.toContain("Scroll down");
+      expect(frame).not.toContain("Scroll up");
+      expect(frame).not.toContain("Scroll left");
+      expect(frame).not.toContain("Scroll right");
       expect(frame).not.toContain("Scroll down 5 lines");
       expect(frame).not.toContain("Scroll up 5 lines");
+
+      if (width === 160) {
+        expect(frame).toContain("Right Expand");
+        expect(frame).toContain("Left Collapse");
+        expect(frame).toContain("Enter Toggle");
+        expect(frame).toContain("s Stage");
+        expect(frame).toContain("u Unstage");
+        expect(frame).toContain("d Discard");
+        expect(frame).toContain("S Stage all");
+        expect(frame).toContain("U Unstage all");
+        expect(frame).toContain("D Discard all");
+      }
 
       await act(async () => {
         await setup.dispose();
@@ -600,6 +615,45 @@ describe("Footer", () => {
     expect(frame).toContain("Left");
     expect(frame).toContain("Right");
     expect(frame).toContain("Enter Activate");
+    expect(frame).toContain("Esc Close or cancel");
+
+    await act(async () => {
+      await setup.dispose();
+    });
+  });
+
+  it("advertises the theme picker keys and every movement binding", async () => {
+    const setup = await renderFooter(
+      <FooterHarness region="branches">
+        <ModalModeProbe />
+        <Registration actionId="nav.up" options={{ scope: "overlay" }} />
+        <Registration actionId="nav.down" options={{ scope: "overlay" }} />
+        <Registration actionId="nav.left" options={{ scope: "overlay" }} />
+        <Registration actionId="nav.right" options={{ scope: "overlay" }} />
+        <Registration actionId="overlay.search" options={{ scope: "overlay" }} />
+        <Registration actionId="theme.tabLeft" options={{ scope: "overlay" }} />
+        <Registration actionId="theme.tabRight" options={{ scope: "overlay" }} />
+        <Registration actionId="theme.export" options={{ scope: "overlay" }} />
+        <Registration actionId="overlay.close" options={{ scope: "global", owner: "app" }} />
+      </FooterHarness>,
+      200,
+    );
+
+    await act(async () => {
+      await setup.renderOnce();
+    });
+    await focusRegion(setup, "branches");
+
+    const frame = setup.captureCharFrame();
+
+    expect(frame).toContain("Up/k Move up");
+    expect(frame).toContain("Down/j Move down");
+    expect(frame).toContain("Left/h Move left");
+    expect(frame).toContain("Right/l Move right");
+    expect(frame).toContain("[ Previous tab");
+    expect(frame).toContain("] Next tab");
+    expect(frame).toContain("e Export theme");
+    expect(frame).toContain("/ Search");
     expect(frame).toContain("Esc Close or cancel");
 
     await act(async () => {

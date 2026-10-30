@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { testRender } from "@opentui/react/test-utils";
 import { act } from "react";
 import type { SyncState } from "@/domain/repository/repository.types";
-import { DEFAULT_THEME_NAME } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME } from "@/domain/theme/theme.registry";
 import { resolveTheme } from "@/domain/theme/theme.resolve";
 import { SyncStateBadge } from "@/features/top-bar/SyncStateBadge";
 import { ShellTestProviders } from "@/test/shell.harness";

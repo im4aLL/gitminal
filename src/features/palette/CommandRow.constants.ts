@@ -3,13 +3,7 @@ import type { PaletteCategory } from "@/features/palette/CommandRow.types";
 /** Shown in the shortcut column when an action has no effective binding. */
 export const PALETTE_UNBOUND_LABEL = "Unbound";
 
-/** Prefix of a category header option row. */
-export const PALETTE_GROUP_HEADER_PREFIX = "-- ";
-
-/** Suffix of a category header option row. */
-export const PALETTE_GROUP_HEADER_SUFFIX = " --";
-
-/** Display label per palette category, used as both the group header and the option name prefix. */
+/** Display label per palette category, used as the header band text. */
 export const PALETTE_CATEGORY_LABELS: Readonly<Record<PaletteCategory, string>> = Object.freeze({
   recent: "Recent",
   app: "App",

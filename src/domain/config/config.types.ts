@@ -1,4 +1,5 @@
 import type { KeybindingOverrides, KeymapPlatform } from "@/domain/keymap/keymap.types";
+import type { ThemeTokens, ThemeVariant } from "@/domain/theme/theme.types";
 
 /** Commit graph scope accepted by `config.json`. */
 export type GraphScope = "all" | "local" | "current";
@@ -24,7 +25,7 @@ export interface GitminalConfig {
     /** Git executable executed directly without a shell. */
     readonly path: string;
   };
-  /** Built-in base theme name. Unknown names fall back to Mocha with a warning. */
+  /** Theme name, either a built-in name or a user theme name. Unknown names fall back to Mocha with a warning. */
   readonly theme: string;
   /** UI behavior settings. */
   readonly ui: {
@@ -61,7 +62,7 @@ export interface GitminalConfig {
   readonly keybindings: KeybindingOverrides;
 }
 
-/** Resolved locations of the three optional configuration files. */
+/** Resolved locations of the configuration files and the themes directory. */
 export interface ConfigFilePaths {
   /** Resolved `config.json` path, or `null` when no location could be resolved. */
   readonly config: string | null;
@@ -69,6 +70,8 @@ export interface ConfigFilePaths {
   readonly keybindings: string | null;
   /** Resolved `theme.json` path, or `null` when no location could be resolved. */
   readonly theme: string | null;
+  /** Resolved themes directory, or `null` when no location could be resolved. */
+  readonly themesDir: string | null;
 }
 
 /** The three optional configuration files the loader can read. */
@@ -122,6 +125,73 @@ export interface ResolveConfigPathsOptions {
 
 /** Reads one file as text; injectable so tests can avoid the filesystem. */
 export type ConfigFileReader = (path: string) => Promise<string>;
+
+/** One theme file reached by the themes directory scan. */
+export interface ThemeFileRead {
+  /** File name inside the themes directory, used as the theme file identity in warnings. */
+  readonly fileName: string;
+  /** Absolute path that was read. */
+  readonly path: string;
+  /** Parsed JSON value, or `null` when the file could not be read or parsed. */
+  readonly value: unknown;
+  /** One-line reason the file was skipped, or `null` when it parsed. */
+  readonly reason: string | null;
+}
+
+/** Result of one bounded themes directory scan. */
+export interface LoadedThemeFiles {
+  /** Parsed theme files, in file-name order. */
+  readonly files: readonly ThemeFileRead[];
+  /**
+   * Directory-level warnings only; per-file reasons travel on each file.
+   *
+   * The scan reports a directory that cannot be listed and the candidates beyond the 64-file cap
+   * here. A file that cannot be read or parsed keeps its reason on its own `ThemeFileRead`, so the
+   * catalogue derives exactly one bounded warning per file and this list never repeats it.
+   */
+  readonly warnings: readonly string[];
+}
+
+/** Inputs accepted by the themes directory scan. */
+export interface LoadThemeFilesOptions {
+  /** Reader override used by tests; defaults to the shared stat-before-read reader. */
+  readonly readFile?: ConfigFileReader;
+}
+
+/** Complete theme a user theme file is written from. */
+export interface ThemeFileDefinition {
+  /** Theme identity written into the file. */
+  readonly name: string;
+  /** Display name written into the file. */
+  readonly label: string;
+  /** Light or dark classification written into the file. */
+  readonly variant: ThemeVariant;
+  /** Complete token table, including the graph lanes. */
+  readonly tokens: ThemeTokens;
+}
+
+/** Inputs accepted by the user theme file writer. */
+export interface WriteUserThemeOptions {
+  /** Themes directory to write into; defaults to the resolved directory. */
+  readonly themesDir?: string | null;
+  /** True to replace an existing file; a missing flag refuses to overwrite. */
+  readonly overwrite?: boolean;
+  /**
+   * Existing-file check override used by tests; defaults to `fs/promises`.
+   *
+   * It reports whether the target path already exists, so the refusal rule can be tested without
+   * touching the filesystem.
+   */
+  readonly fileExists?: (path: string) => Promise<boolean>;
+  /** Rename override used by tests on the atomic path; defaults to `fs/promises`. */
+  readonly renameFile?: (source: string, destination: string) => Promise<void>;
+  /** Environment variables used to resolve the default themes directory. */
+  readonly env?: Readonly<Record<string, string | undefined>>;
+  /** Home directory used to resolve the default themes directory. */
+  readonly homeDir?: string;
+  /** Platform family used to resolve the default themes directory. */
+  readonly platform?: KeymapPlatform;
+}
 
 /** Options accepted by the configuration file loader. */
 export interface LoadConfigFilesOptions {

@@ -17,13 +17,88 @@ const INSTALL_COMMANDS = Object.freeze({
 });
 
 /**
- * Available simulator themes matching Gitminal's built-in Catppuccin and monochrome palettes.
+ * Simulator palettes for every built-in theme, mirrored from
+ * `src/domain/theme/themes/` and keyed by the name written into `config.json`.
+ *
+ * A theme supplies every token the simulated terminal paints with. `mono-dark` is
+ * the NO_COLOR outcome rather than a selectable theme, so it is preview-only and
+ * never listed in the picker's Dark or Light tab.
  */
-const SIM_THEMES = Object.freeze([
-  "catppuccin-mocha",
-  "catppuccin-macchiato",
-  "catppuccin-frappe",
-  "mono-dark",
+// biome-ignore format: one mirrored palette per line keeps the 40-theme table scannable.
+const SIM_THEMES = Object.freeze({
+  "catppuccin-mocha": Object.freeze({ label: "Catppuccin Mocha", variant: "dark", bg: "#1e1e2e", mantle: "#181825", surface: "#313244", border: "#45475a", selection: "#585b70", focus: "#cba6f7", text: "#cdd6f4", muted: "#a6adc8", dim: "#7f849c", green: "#a6e3a1", red: "#f38ba8", yellow: "#f9e2af", blue: "#89b4fa", peach: "#fab387", teal: "#94e2d5", addBg: "#1f3b2c", delBg: "#3b1f2a", lanes: Object.freeze(["#cba6f7","#89b4fa","#94e2d5","#fab387"]) }),
+  "catppuccin-macchiato": Object.freeze({ label: "Catppuccin Macchiato", variant: "dark", bg: "#24273a", mantle: "#1e2030", surface: "#363a4f", border: "#494d64", selection: "#5b6078", focus: "#c6a0f6", text: "#cad3f5", muted: "#a5adcb", dim: "#8087a2", green: "#a6da95", red: "#ed8796", yellow: "#eed49f", blue: "#8aadf4", peach: "#f5a97f", teal: "#8bd5ca", addBg: "#343c45", delBg: "#3c3245", lanes: Object.freeze(["#c6a0f6","#8aadf4","#8bd5ca","#f5a97f"]) }),
+  "catppuccin-frappe": Object.freeze({ label: "Catppuccin Frappe", variant: "dark", bg: "#303446", mantle: "#292c3c", surface: "#414559", border: "#51576d", selection: "#626880", focus: "#ca9ee6", text: "#c6d0f5", muted: "#a5adce", dim: "#838ba7", green: "#a6d189", red: "#e78284", yellow: "#e5c890", blue: "#8caaee", peach: "#ef9f76", teal: "#81c8be", addBg: "#3e464e", delBg: "#463d4d", lanes: Object.freeze(["#ca9ee6","#8caaee","#81c8be","#ef9f76"]) }),
+  "catppuccin-latte": Object.freeze({ label: "Catppuccin Latte", variant: "light", bg: "#eff1f5", mantle: "#e6e9ef", surface: "#ccd0da", border: "#bcc0cc", selection: "#acb0be", focus: "#8839ef", text: "#4c4f69", muted: "#6c6f85", dim: "#8c8fa1", green: "#40a02b", red: "#d20f39", yellow: "#df8e1d", blue: "#1e66f5", peach: "#fe640b", teal: "#179299", addBg: "#eef6f1", delBg: "#ecd6de", lanes: Object.freeze(["#8839ef","#1e66f5","#179299","#fe640b"]) }),
+  "tokyo-night-night": Object.freeze({ label: "Tokyo Night", variant: "dark", bg: "#1a1b26", mantle: "#16161e", surface: "#292e42", border: "#414868", selection: "#394b70", focus: "#7aa2f7", text: "#c0caf5", muted: "#a9b1d6", dim: "#565f89", green: "#9ece6a", red: "#f7768e", yellow: "#e0af68", blue: "#7dcfff", peach: "#ff9e64", teal: "#73daca", addBg: "#2c3430", delBg: "#392835", lanes: Object.freeze(["#7aa2f7","#bb9af7","#73daca","#ff9e64"]) }),
+  "tokyo-night-storm": Object.freeze({ label: "Tokyo Night Storm", variant: "dark", bg: "#24283b", mantle: "#1f2335", surface: "#292e42", border: "#414868", selection: "#394b70", focus: "#7aa2f7", text: "#c0caf5", muted: "#a9b1d6", dim: "#565f89", green: "#9ece6a", red: "#f7768e", yellow: "#e0af68", blue: "#7dcfff", peach: "#ff9e64", teal: "#73daca", addBg: "#353f42", delBg: "#423347", lanes: Object.freeze(["#7aa2f7","#bb9af7","#73daca","#ff9e64"]) }),
+  "tokyo-night-moon": Object.freeze({ label: "Tokyo Night Moon", variant: "dark", bg: "#222436", mantle: "#1e2030", surface: "#2f334d", border: "#444a73", selection: "#394b70", focus: "#82aaff", text: "#c8d3f5", muted: "#828bb8", dim: "#636da6", green: "#c3e88d", red: "#ff757f", yellow: "#ffc777", blue: "#86e1fc", peach: "#ff966c", teal: "#4fd6be", addBg: "#393f42", delBg: "#412f40", lanes: Object.freeze(["#82aaff","#c099ff","#4fd6be","#ff966c"]) }),
+  "tokyo-night-day": Object.freeze({ label: "Tokyo Night Day", variant: "light", bg: "#e1e2e7", mantle: "#e1e2e7", surface: "#e1e2e7", border: "#b4b5b9", selection: "#b7c1e3", focus: "#2e7de9", text: "#3760bf", muted: "#6172b0", dim: "#848cb5", green: "#587539", red: "#db0a49", yellow: "#8c6c3e", blue: "#007197", peach: "#b15c00", teal: "#387068", addBg: "#d9dbdd", delBg: "#e1d5de", lanes: Object.freeze(["#2e7de9","#9854f1","#387068","#b15c00"]) }),
+  "gruvbox-dark": Object.freeze({ label: "Gruvbox Dark", variant: "dark", bg: "#282828", mantle: "#32302f", surface: "#3c3836", border: "#504945", selection: "#504945", focus: "#fe8019", text: "#ebdbb2", muted: "#bdae93", dim: "#928374", green: "#b8bb26", red: "#fb4934", yellow: "#fabd2f", blue: "#83a598", peach: "#fe8019", teal: "#fabd2f", addBg: "#3c3d28", delBg: "#462d2a", lanes: Object.freeze(["#fb4934","#b8bb26","#fabd2f","#83a598"]) }),
+  "gruvbox-light": Object.freeze({ label: "Gruvbox Light", variant: "light", bg: "#fbf1c7", mantle: "#f2e5bc", surface: "#ebdbb2", border: "#d5c4a1", selection: "#d5c4a1", focus: "#af3a03", text: "#282828", muted: "#504945", dim: "#7c6f64", green: "#79740e", red: "#9d0006", yellow: "#b57614", blue: "#076678", peach: "#af3a03", teal: "#b57614", addBg: "#e9e0ad", delBg: "#eecfac", lanes: Object.freeze(["#9d0006","#79740e","#b57614","#076678"]) }),
+  "nord": Object.freeze({ label: "Nord", variant: "dark", bg: "#2e3440", mantle: "#3b4252", surface: "#3b4252", border: "#4c566a", selection: "#434c5e", focus: "#88c0d0", text: "#d8dee9", muted: "#81a1c1", dim: "#5e81ac", green: "#a3be8c", red: "#bf616a", yellow: "#ebcb8b", blue: "#88c0d0", peach: "#d08770", teal: "#ebcb8b", addBg: "#3e474b", delBg: "#292f3a", lanes: Object.freeze(["#88c0d0","#a3be8c","#ebcb8b","#b48ead"]) }),
+  "rose-pine-main": Object.freeze({ label: "Rose Pine", variant: "dark", bg: "#191724", mantle: "#1f1d2e", surface: "#26233a", border: "#403d52", selection: "#403d52", focus: "#c4a7e7", text: "#e0def4", muted: "#908caa", dim: "#6e6a86", green: "#31748f", red: "#eb6f92", yellow: "#f6c177", blue: "#9ccfd8", peach: "#ebbcba", teal: "#ebbcba", addBg: "#171520", delBg: "#362333", lanes: Object.freeze(["#c4a7e7","#9ccfd8","#ebbcba","#f6c177"]) }),
+  "rose-pine-moon": Object.freeze({ label: "Rose Pine Moon", variant: "dark", bg: "#232136", mantle: "#2a273f", surface: "#393552", border: "#44415a", selection: "#44415a", focus: "#c4a7e7", text: "#e0def4", muted: "#908caa", dim: "#6e6a86", green: "#3e8fb0", red: "#eb6f92", yellow: "#f6c177", blue: "#9ccfd8", peach: "#ea9a97", teal: "#ea9a97", addBg: "#273047", delBg: "#3f2c43", lanes: Object.freeze(["#c4a7e7","#9ccfd8","#ea9a97","#f6c177"]) }),
+  "rose-pine-dawn": Object.freeze({ label: "Rose Pine Dawn", variant: "light", bg: "#faf4ed", mantle: "#fffaf3", surface: "#f2e9e1", border: "#dfdad9", selection: "#dfdad9", focus: "#907aa9", text: "#464261", muted: "#797593", dim: "#9893a5", green: "#286983", red: "#b4637a", yellow: "#ea9d34", blue: "#56949f", peach: "#d7827e", teal: "#d7827e", addBg: "#dde1de", delBg: "#f0e0dd", lanes: Object.freeze(["#907aa9","#56949f","#d7827e","#ea9d34"]) }),
+  "flexoki-ink": Object.freeze({ label: "Flexoki Ink", variant: "dark", bg: "#100f0f", mantle: "#1c1b1a", surface: "#282726", border: "#343331", selection: "#403e3c", focus: "#4385be", text: "#cecdc3", muted: "#878580", dim: "#6f6e69", green: "#879a39", red: "#d14d41", yellow: "#d0a215", blue: "#4385be", peach: "#da702c", teal: "#3aa99f", addBg: "#212215", delBg: "#2b1816", lanes: Object.freeze(["#4385be","#8b7ec8","#3aa99f","#da702c"]) }),
+  "flexoki-paper": Object.freeze({ label: "Flexoki Paper", variant: "light", bg: "#fffcf0", mantle: "#f2f0e5", surface: "#e6e4d9", border: "#dad8ce", selection: "#cecdc3", focus: "#205ea6", text: "#100f0f", muted: "#6f6e69", dim: "#878580", green: "#66800b", red: "#af3029", yellow: "#ad8301", blue: "#205ea6", peach: "#bc5215", teal: "#24837b", addBg: "#eaebd0", delBg: "#f4dfd4", lanes: Object.freeze(["#205ea6","#5e409d","#24837b","#bc5215"]) }),
+  "dracula": Object.freeze({ label: "Dracula", variant: "dark", bg: "#282a36", mantle: "#21222c", surface: "#21222c", border: "#44475a", selection: "#44475a", focus: "#bd93f9", text: "#f8f8f2", muted: "#6272a4", dim: "#6272a4", green: "#50fa7b", red: "#ff5555", yellow: "#f1fa8c", blue: "#8be9fd", peach: "#ffb86c", teal: "#50fa7b", addBg: "#2a363a", delBg: "#352d38", lanes: Object.freeze(["#bd93f9","#8be9fd","#50fa7b","#ffb86c"]) }),
+  "dracula-alucard": Object.freeze({ label: "Dracula Alucard", variant: "light", bg: "#fffbeb", mantle: "#f7f0dc", surface: "#f7f0dc", border: "#cfcfde", selection: "#cfcfde", focus: "#644ac9", text: "#1f1f1f", muted: "#6c664b", dim: "#6c664b", green: "#14710a", red: "#cb3a2a", yellow: "#846e15", blue: "#036a96", peach: "#a34d14", teal: "#14710a", addBg: "#f1f3dd", delBg: "#fcefdf", lanes: Object.freeze(["#644ac9","#036a96","#14710a","#a34d14"]) }),
+  "one-dark": Object.freeze({ label: "One Dark", variant: "dark", bg: "#282c34", mantle: "#21252b", surface: "#2c323c", border: "#3e4451", selection: "#3e4451", focus: "#528bff", text: "#abb2bf", muted: "#828997", dim: "#5c6370", green: "#98c379", red: "#e06c75", yellow: "#e5c07b", blue: "#56b6c2", peach: "#d19a66", teal: "#56b6c2", addBg: "#2f3538", delBg: "#333038", lanes: Object.freeze(["#528bff","#c678dd","#56b6c2","#98c379"]) }),
+  "one-light": Object.freeze({ label: "One Light", variant: "light", bg: "#fafafa", mantle: "#f0f0f0", surface: "#eaeaeb", border: "#e5e5e6", selection: "#e5e5e6", focus: "#526eff", text: "#383a42", muted: "#696c77", dim: "#a0a1a7", green: "#50a14f", red: "#e45649", yellow: "#c18401", blue: "#0184bc", peach: "#986801", teal: "#0184bc", addBg: "#eff2ef", delBg: "#f8eeed", lanes: Object.freeze(["#526eff","#a626a4","#0184bc","#50a14f"]) }),
+  "solarized-dark": Object.freeze({ label: "Solarized Dark", variant: "dark", bg: "#002b36", mantle: "#002b36", surface: "#073642", border: "#586e75", selection: "#073642", focus: "#268bd2", text: "#93a1a1", muted: "#839496", dim: "#586e75", green: "#859900", red: "#dc322f", yellow: "#b58900", blue: "#268bd2", peach: "#cb4b16", teal: "#2aa198", addBg: "#083233", delBg: "#0d2b36", lanes: Object.freeze(["#268bd2","#6c71c4","#2aa198","#859900"]) }),
+  "solarized-light": Object.freeze({ label: "Solarized Light", variant: "light", bg: "#fdf6e3", mantle: "#fdf6e3", surface: "#fdf6e3", border: "#93a1a1", selection: "#eee8d5", focus: "#268bd2", text: "#586e75", muted: "#657b83", dim: "#93a1a1", green: "#859900", red: "#dc322f", yellow: "#b58900", blue: "#268bd2", peach: "#cb4b16", teal: "#2aa198", addBg: "#f5efd5", delBg: "#fbead8", lanes: Object.freeze(["#268bd2","#6c71c4","#2aa198","#859900"]) }),
+  "zenburn": Object.freeze({ label: "Zenburn", variant: "dark", bg: "#3f3f3f", mantle: "#333333", surface: "#4f4f4f", border: "#545a4f", selection: "#2f2f2f", focus: "#f0dfaf", text: "#dcdccc", muted: "#9fafaf", dim: "#8f8f8f", green: "#9ece9e", red: "#cc9393", yellow: "#e3ceab", blue: "#8cd0d3", peach: "#dfaf8f", teal: "#efef8f", addBg: "#454845", delBg: "#474444", lanes: Object.freeze(["#8cd0d3","#dca3a3","#efef8f","#cc9393"]) }),
+  "high-contrast-dark": Object.freeze({ label: "High Contrast Dark", variant: "dark", bg: "#000000", mantle: "#0a0a0a", surface: "#1a1a1a", border: "#6b6b6b", selection: "#262626", focus: "#ffd400", text: "#ffffff", muted: "#d0d0d0", dim: "#a0a0a0", green: "#4ade80", red: "#ff6b6b", yellow: "#fbbf24", blue: "#60a5fa", peach: "#ff9f43", teal: "#60a5fa", addBg: "#040d08", delBg: "#0f0606", lanes: Object.freeze(["#ffd400","#4ade80","#60a5fa","#ff9f43"]) }),
+  "high-contrast-light": Object.freeze({ label: "High Contrast Light", variant: "light", bg: "#ffffff", mantle: "#f4f4f4", surface: "#e8e8e8", border: "#767676", selection: "#dcdcdc", focus: "#0033cc", text: "#000000", muted: "#333333", dim: "#555555", green: "#0b4a1f", red: "#990019", yellow: "#6b4500", blue: "#0043a3", peach: "#a33d00", teal: "#0043a3", addBg: "#f0f4f2", delBg: "#f9f0f1", lanes: Object.freeze(["#0033cc","#0b4a1f","#0043a3","#a33d00"]) }),
+  "kanagawa": Object.freeze({ label: "Kanagawa", variant: "dark", bg: "#1f1f28", mantle: "#16161d", surface: "#2a2a37", border: "#363646", selection: "#2d4f67", focus: "#7e9cd8", text: "#dcd7ba", muted: "#c8c093", dim: "#727169", green: "#98bb6c", red: "#e46876", yellow: "#e6c384", blue: "#7fb4ca", peach: "#ffa066", teal: "#7aa89f", addBg: "#2b3328", delBg: "#43242b", lanes: Object.freeze(["#7e9cd8","#957fb8","#7aa89f","#e6c384"]) }),
+  "everforest": Object.freeze({ label: "Everforest", variant: "dark", bg: "#2d353b", mantle: "#232a2e", surface: "#343f44", border: "#3d484d", selection: "#475258", focus: "#a7c080", text: "#d3c6aa", muted: "#859289", dim: "#7a8478", green: "#a7c080", red: "#e67e80", yellow: "#dbbc7f", blue: "#7fbbb3", peach: "#e69875", teal: "#d699b6", addBg: "#425047", delBg: "#514045", lanes: Object.freeze(["#a7c080","#7fbbb3","#d699b6","#dbbc7f"]) }),
+  "ayu": Object.freeze({ label: "Ayu", variant: "dark", bg: "#0d1017", mantle: "#0d1017", surface: "#141821", border: "#1b1f29", selection: "#212733", focus: "#e6b450", text: "#bfbdb6", muted: "#667381", dim: "#5a6673", green: "#70bf56", red: "#f26d78", yellow: "#ffb454", blue: "#59c2ff", peach: "#ff8f40", teal: "#39bae6", addBg: "#131b1b", delBg: "#1b161d", lanes: Object.freeze(["#59c2ff","#d2a6ff","#39bae6","#aad94c"]) }),
+  "nightfox": Object.freeze({ label: "Nightfox", variant: "dark", bg: "#192330", mantle: "#131a24", surface: "#212e3f", border: "#29394f", selection: "#2b3b51", focus: "#719cd6", text: "#cdcecf", muted: "#aeafb0", dim: "#738091", green: "#81b29a", red: "#c94f6d", yellow: "#dbc074", blue: "#63cdcf", peach: "#f4a261", teal: "#63cdcf", addBg: "#1f2c36", delBg: "#242634", lanes: Object.freeze(["#719cd6","#9d79d6","#63cdcf","#81b29a"]) }),
+  "github-light": Object.freeze({ label: "GitHub Light", variant: "light", bg: "#f6f8fa", mantle: "#ffffff", surface: "#eaeef2", border: "#d0d7de", selection: "#d0d7de", focus: "#0969da", text: "#1f2328", muted: "#656d76", dim: "#6e7781", green: "#1a7f37", red: "#cf222e", yellow: "#9a6700", blue: "#0969da", peach: "#bc4c00", teal: "#1b7c83", addBg: "#e6ffec", delBg: "#ffebe9", lanes: Object.freeze(["#0969da","#8250df","#1b7c83","#bc4c00"]) }),
+  "noctis": Object.freeze({ label: "Noctis", variant: "dark", bg: "#052529", mantle: "#041d20", surface: "#073940", border: "#0f1415", selection: "#0e6671", focus: "#40d4e7", text: "#b2cacd", muted: "#929ea0", dim: "#5b858b", green: "#49e9a6", red: "#e3541c", yellow: "#d5971a", blue: "#49ace9", peach: "#e66533", teal: "#49d6e9", addBg: "#093131", delBg: "#122828", lanes: Object.freeze(["#16a3b6","#df769b","#49d6e9","#49e9a6"]) }),
+  "sonokai": Object.freeze({ label: "Sonokai", variant: "dark", bg: "#2c2e34", mantle: "#222327", surface: "#33353f", border: "#3b3e48", selection: "#414550", focus: "#76cce0", text: "#e2e2e3", muted: "#7f8490", dim: "#595f6f", green: "#9ed072", red: "#fc5d7c", yellow: "#e7c664", blue: "#76cce0", peach: "#f39660", teal: "#9ed072", addBg: "#394634", delBg: "#55393d", lanes: Object.freeze(["#76cce0","#b39df3","#9ed072","#e7c664"]) }),
+  "zenbones": Object.freeze({ label: "Zenbones", variant: "dark", bg: "#191919", mantle: "#191919", surface: "#2c2c2c", border: "#555555", selection: "#444444", focus: "#819b69", text: "#bbbbbb", muted: "#8e8e8e", dim: "#686868", green: "#819b69", red: "#de6e7c", yellow: "#b77e64", blue: "#6099c0", peach: "#b77e64", teal: "#66a5ad", addBg: "#1f211e", delBg: "#251e1f", lanes: Object.freeze(["#6099c0","#b279a7","#66a5ad","#b77e64"]) }),
+  "tomorrow": Object.freeze({ label: "Tomorrow", variant: "light", bg: "#ffffff", mantle: "#efefef", surface: "#efefef", border: "#d6d6d6", selection: "#d6d6d6", focus: "#4271ae", text: "#4d4d4c", muted: "#4d4d4c", dim: "#8e908c", green: "#718c00", red: "#c82829", yellow: "#f5871f", blue: "#3e999f", peach: "#f5871f", teal: "#3e999f", addBg: "#f6f8f0", delBg: "#fcf2f2", lanes: Object.freeze(["#4271ae","#8959a8","#3e999f","#718c00"]) }),
+  "seoul256": Object.freeze({ label: "Seoul256", variant: "dark", bg: "#3a3a3a", mantle: "#262626", surface: "#262626", border: "#4e4e4e", selection: "#005f5f", focus: "#87afd7", text: "#d0d0d0", muted: "#87875f", dim: "#5f875f", green: "#87af87", red: "#d75f87", yellow: "#d7af5f", blue: "#87afd7", peach: "#d7875f", teal: "#87af87", addBg: "#005f00", delBg: "#875f5f", lanes: Object.freeze(["#87afd7","#d75f87","#87af87","#d7af5f"]) }),
+  "srcery": Object.freeze({ label: "Srcery", variant: "dark", bg: "#1c1b19", mantle: "#121212", surface: "#262522", border: "#312f2c", selection: "#3b3935", focus: "#fbb829", text: "#fce8c3", muted: "#c5b088", dim: "#917e6b", green: "#519f50", red: "#ef2f27", yellow: "#fed06e", blue: "#68a8e4", peach: "#ff5f00", teal: "#2be4d0", addBg: "#294229", delBg: "#4f2321", lanes: Object.freeze(["#68a8e4","#ff5c8f","#2be4d0","#98bc37"]) }),
+  "iceberg": Object.freeze({ label: "Iceberg", variant: "dark", bg: "#161821", mantle: "#17171b", surface: "#1e2132", border: "#3e445e", selection: "#272c42", focus: "#84a0c6", text: "#c6c8d1", muted: "#818596", dim: "#6b7089", green: "#b4be82", red: "#e27878", yellow: "#e2a478", blue: "#89b8c2", peach: "#e2a478", teal: "#89b8c2", addBg: "#1f2227", delBg: "#221e26", lanes: Object.freeze(["#84a0c6","#a093c7","#89b8c2","#b4be82"]) }),
+  "night-owl": Object.freeze({ label: "Night Owl", variant: "dark", bg: "#011627", mantle: "#01111d", surface: "#0b2942", border: "#1d3b53", selection: "#14344f", focus: "#82aaff", text: "#d6deeb", muted: "#89a4bb", dim: "#637777", green: "#22da6e", red: "#ff5874", yellow: "#c5e478", blue: "#7fdbca", peach: "#c792ea", teal: "#7fdbca", addBg: "#03222b", delBg: "#101a2c", lanes: Object.freeze(["#82aaff","#c792ea","#7fdbca","#22da6e"]) }),
+  "jellybeans": Object.freeze({ label: "Jellybeans", variant: "dark", bg: "#151515", mantle: "#1c1c1c", surface: "#333333", border: "#403c41", selection: "#404040", focus: "#8fbfdc", text: "#e8e8d3", muted: "#a0a8b0", dim: "#888888", green: "#99ad6a", red: "#cf6a4c", yellow: "#ffb964", blue: "#8fbfdc", peach: "#dad085", teal: "#99ad6a", addBg: "#437019", delBg: "#201a18", lanes: Object.freeze(["#8fbfdc","#c6b6ee","#99ad6a","#ffb964"]) }),
+  "tender": Object.freeze({ label: "Tender", variant: "dark", bg: "#282828", mantle: "#202020", surface: "#202020", border: "#444444", selection: "#293b44", focus: "#73cef4", text: "#eeeeee", muted: "#999999", dim: "#666666", green: "#c9d05c", red: "#f43753", yellow: "#ffc24b", blue: "#73cef4", peach: "#ffc24b", teal: "#ffc24b", addBg: "#32322b", delBg: "#34292b", lanes: Object.freeze(["#73cef4","#c9d05c","#ffc24b","#f43753"]) }),
+  "mono-dark": Object.freeze({ label: "NO_COLOR (mono)", variant: "dark", previewOnly: true, bg: "#000000", mantle: "#0c0c0c", surface: "#1f1f1f", border: "#6a6a6a", selection: "#2f2f2f", focus: "#ffffff", text: "#ffffff", muted: "#b0b0b0", dim: "#8a8a8a", green: "#ffffff", red: "#ffffff", yellow: "#d0d0d0", blue: "#d0d0d0", peach: "#d0d0d0", teal: "#ffffff", addBg: "#1a1a1a", delBg: "#1a1a1a", lanes: Object.freeze(["#ffffff", "#d0d0d0", "#b0b0b0", "#8a8a8a"]) }),
+});
+
+/** Theme the simulator starts on. */
+const DEFAULT_SIM_THEME = "catppuccin-mocha";
+
+/** Maps one simulator palette field onto the CSS custom property it paints with. */
+const SIM_THEME_CSS_VARS = Object.freeze({
+  bg: "--sim-bg",
+  mantle: "--sim-mantle",
+  surface: "--sim-surface",
+  border: "--sim-border",
+  selection: "--sim-selection",
+  focus: "--sim-focus",
+  text: "--sim-text",
+  muted: "--sim-muted",
+  dim: "--sim-dim",
+  green: "--sim-green",
+  red: "--sim-red",
+  yellow: "--sim-yellow",
+  blue: "--sim-blue",
+  peach: "--sim-peach",
+  teal: "--sim-teal",
+  addBg: "--sim-add-bg",
+  delBg: "--sim-del-bg",
+});
+
+/** CSS custom properties the commit graph lanes paint with, in lane order. */
+const SIM_LANE_CSS_VARS = Object.freeze([
+  "--color-lane-0",
+  "--color-lane-1",
+  "--color-lane-2",
+  "--color-lane-3",
 ]);
 
 /**
@@ -354,10 +429,11 @@ const GRAPH_COMMITS = Object.freeze([
 ]);
 
 /**
- * Complete default keybinding catalog from README.md.
+ * Complete default keybinding catalogue mirrored from
+ * `src/domain/keymap/keymap.defaults.ts`, in catalogue order.
  */
 const KEYBINDINGS = Object.freeze([
-  { action: "Quit", id: "app.quit", scope: "global", keys: ["q", "ctrl+c"] },
+  { action: "Quit", id: "app.quit", scope: "global", keys: ["q"] },
   { action: "Help", id: "app.help", scope: "global", keys: ["?", "f1"] },
   {
     action: "Command palette",
@@ -365,13 +441,8 @@ const KEYBINDINGS = Object.freeze([
     scope: "global",
     keys: ["ctrl+p", "mod+p", "f2"],
   },
-  {
-    action: "Toggle console",
-    id: "app.console",
-    scope: "global",
-    keys: ["ctrl+`", "mod+`", "ctrl+space (WSL)"],
-  },
-  { action: "Refresh repository", id: "app.refresh", scope: "global", keys: ["r"] },
+  { action: "Toggle console", id: "app.console", scope: "global", keys: ["ctrl+`", "mod+`"] },
+  { action: "Refresh", id: "app.refresh", scope: "global", keys: ["r"] },
   { action: "Reload configuration", id: "app.reloadConfig", scope: "global", keys: [] },
   { action: "Theme picker", id: "app.themePicker", scope: "global", keys: ["t"] },
   { action: "Pull", id: "remote.pull", scope: "global", keys: ["p"] },
@@ -387,22 +458,20 @@ const KEYBINDINGS = Object.freeze([
   { action: "Fetch", id: "remote.fetch", scope: "global", keys: ["f"] },
   { action: "Fetch and prune", id: "remote.fetchPrune", scope: "global", keys: ["F"] },
   { action: "More remote actions", id: "remote.more", scope: "global", keys: ["."] },
-  { action: "Stage all unstaged", id: "diff.stageAllUnstaged", scope: "global", keys: ["A"] },
   { action: "Focus commit composer", id: "commit.focus", scope: "global", keys: ["c"] },
+  { action: "Next region", id: "focus.next", scope: "global", keys: ["tab"] },
+  { action: "Previous region", id: "focus.previous", scope: "global", keys: ["shift+tab"] },
   { action: "Close or cancel", id: "overlay.close", scope: "global", keys: ["esc"] },
-
-  { action: "Next region", id: "focus.next", scope: "navigation", keys: ["tab"] },
-  { action: "Previous region", id: "focus.previous", scope: "navigation", keys: ["shift+tab"] },
-  { action: "Focus top bar", id: "focus.region.topBar", scope: "navigation", keys: [] },
-  { action: "Focus branches", id: "focus.region.branches", scope: "navigation", keys: ["1"] },
-  { action: "Focus remotes", id: "focus.region.remotes", scope: "navigation", keys: ["2"] },
-  { action: "Focus tags", id: "focus.region.tags", scope: "navigation", keys: ["3"] },
-  { action: "Focus stashes", id: "focus.region.stashes", scope: "navigation", keys: ["4"] },
-  { action: "Focus worktrees", id: "focus.region.worktrees", scope: "navigation", keys: ["5"] },
-  { action: "Focus commit graph", id: "focus.region.graph", scope: "navigation", keys: ["6"] },
-  { action: "Focus right pane", id: "focus.region.rightPane", scope: "navigation", keys: ["7"] },
-  { action: "Focus diffs", id: "focus.region.diff", scope: "navigation", keys: ["8"] },
-  { action: "Focus console", id: "focus.region.console", scope: "navigation", keys: ["9"] },
+  { action: "Focus top bar", id: "focus.region.topBar", scope: "global", keys: [] },
+  { action: "Focus branches", id: "focus.region.branches", scope: "global", keys: ["1"] },
+  { action: "Focus remotes", id: "focus.region.remotes", scope: "global", keys: ["2"] },
+  { action: "Focus tags", id: "focus.region.tags", scope: "global", keys: ["3"] },
+  { action: "Focus stashes", id: "focus.region.stashes", scope: "global", keys: ["4"] },
+  { action: "Focus worktrees", id: "focus.region.worktrees", scope: "global", keys: ["5"] },
+  { action: "Focus commit graph", id: "focus.region.graph", scope: "global", keys: ["6"] },
+  { action: "Focus right pane", id: "focus.region.rightPane", scope: "global", keys: ["7"] },
+  { action: "Focus diffs", id: "focus.region.diff", scope: "global", keys: ["8"] },
+  { action: "Focus console", id: "focus.region.console", scope: "global", keys: ["9"] },
   { action: "Move up", id: "nav.up", scope: "navigation", keys: ["up", "k"] },
   { action: "Move down", id: "nav.down", scope: "navigation", keys: ["down", "j"] },
   { action: "Page up", id: "nav.pageUp", scope: "navigation", keys: ["pageup"] },
@@ -414,7 +483,7 @@ const KEYBINDINGS = Object.freeze([
   { action: "Move right", id: "nav.right", scope: "navigation", keys: ["right", "l"] },
   { action: "Expand", id: "nav.expand", scope: "navigation", keys: ["right", "l"] },
   { action: "Collapse", id: "nav.collapse", scope: "navigation", keys: ["left", "h"] },
-  { action: "Filter list", id: "list.filter", scope: "navigation", keys: ["/"] },
+  { action: "Search list", id: "list.filter", scope: "navigation", keys: ["/"] },
   {
     action: "Search commits",
     id: "graph.search",
@@ -422,8 +491,10 @@ const KEYBINDINGS = Object.freeze([
     keys: ["/", "ctrl+f", "mod+f"],
   },
   { action: "Load older commits", id: "graph.loadOlder", scope: "navigation", keys: ["L"] },
-  { action: "Search help", id: "help.search", scope: "navigation", keys: ["/"] },
-
+  { action: "Search", id: "overlay.search", scope: "overlay", keys: ["/"] },
+  { action: "Previous tab", id: "theme.tabLeft", scope: "overlay", keys: ["["] },
+  { action: "Next tab", id: "theme.tabRight", scope: "overlay", keys: ["]"] },
+  { action: "Export theme", id: "theme.export", scope: "overlay", keys: ["e"] },
   { action: "New branch", id: "branch.create", scope: "panels", keys: ["n"] },
   { action: "Delete branch", id: "branch.delete", scope: "panels", keys: ["d"] },
   { action: "Create local branch", id: "remote.createLocal", scope: "panels", keys: ["space"] },
@@ -436,7 +507,6 @@ const KEYBINDINGS = Object.freeze([
   { action: "Delete stash", id: "stash.delete", scope: "panels", keys: ["d"] },
   { action: "New worktree", id: "worktree.create", scope: "panels", keys: ["n"] },
   { action: "Delete worktree", id: "worktree.delete", scope: "panels", keys: ["d"] },
-
   { action: "Commit", id: "commit.submit", scope: "composer", keys: ["ctrl+s", "mod+s"] },
   { action: "Commit without hooks", id: "commit.submitNoVerify", scope: "composer", keys: [] },
   { action: "Amend commit", id: "commit.amend", scope: "composer", keys: [] },
@@ -448,37 +518,22 @@ const KEYBINDINGS = Object.freeze([
     scope: "composer",
     keys: ["ctrl+enter", "mod+enter"],
   },
-
-  { action: "Toggle file", id: "diff.toggle", scope: "diff", keys: ["enter"] },
-  { action: "Scroll down one line", id: "diff.scrollDown", scope: "diff", keys: ["J"] },
-  { action: "Scroll up one line", id: "diff.scrollUp", scope: "diff", keys: ["K"] },
-  {
-    action: "Scroll down five lines",
-    id: "diff.scrollFastDown",
-    scope: "diff",
-    keys: ["shift+down"],
-  },
-  { action: "Scroll up five lines", id: "diff.scrollFastUp", scope: "diff", keys: ["shift+up"] },
-  {
-    action: "Scroll left eight columns",
-    id: "diff.scrollLeft",
-    scope: "diff",
-    keys: ["H", "shift+left"],
-  },
-  {
-    action: "Scroll right eight columns",
-    id: "diff.scrollRight",
-    scope: "diff",
-    keys: ["L", "shift+right"],
-  },
-  { action: "Stage file", id: "diff.stage", scope: "diff", keys: ["s"] },
-  { action: "Unstage file", id: "diff.unstage", scope: "diff", keys: ["u"] },
-  { action: "Discard file changes", id: "diff.discard", scope: "diff", keys: ["d"] },
+  { action: "Toggle", id: "diff.toggle", scope: "diff", keys: ["enter"] },
+  { action: "Stage", id: "diff.stage", scope: "diff", keys: ["s"] },
+  { action: "Unstage", id: "diff.unstage", scope: "diff", keys: ["u"] },
+  { action: "Discard", id: "diff.discard", scope: "diff", keys: ["d"] },
   { action: "Delete untracked file", id: "diff.deleteUntracked", scope: "diff", keys: [] },
-  { action: "Stage all in section", id: "diff.stageAll", scope: "diff", keys: ["S"] },
+  { action: "Stage all", id: "diff.stageAll", scope: "diff", keys: ["S"] },
+  { action: "Stage all unstaged", id: "diff.stageAllUnstaged", scope: "global", keys: ["A"] },
   { action: "Unstage all", id: "diff.unstageAll", scope: "diff", keys: ["U"] },
-  { action: "Discard all changes", id: "diff.discardAll", scope: "diff", keys: ["D"] },
-  { action: "Delete all untracked", id: "diff.deleteAllUntracked", scope: "diff", keys: [] },
+  { action: "Discard all", id: "diff.discardAll", scope: "diff", keys: ["D"] },
+  { action: "Delete all untracked files", id: "diff.deleteAllUntracked", scope: "diff", keys: [] },
+  { action: "Scroll down", id: "diff.scrollDown", scope: "diff", keys: ["J"] },
+  { action: "Scroll up", id: "diff.scrollUp", scope: "diff", keys: ["K"] },
+  { action: "Scroll down 5 lines", id: "diff.scrollFastDown", scope: "diff", keys: ["shift+down"] },
+  { action: "Scroll up 5 lines", id: "diff.scrollFastUp", scope: "diff", keys: ["shift+up"] },
+  { action: "Scroll left", id: "diff.scrollLeft", scope: "diff", keys: ["H", "shift+left"] },
+  { action: "Scroll right", id: "diff.scrollRight", scope: "diff", keys: ["L", "shift+right"] },
   { action: "Clear console", id: "console.clear", scope: "diff", keys: ["c"] },
 ]);
 
@@ -506,7 +561,7 @@ const CONFIG_SNIPPETS = Object.freeze({
   "remote": { "fetchScope": "local" }
 }`,
     notes:
-      "Every key is optional. Invalid fields keep their previous effective value and emit a non-fatal warning. Set graph.style to 'sharp' if your terminal font lacks rounded arc glyphs.",
+      "Every key is optional. Invalid fields keep their previous effective value and emit a non-fatal warning. theme accepts a built-in name, the name of one of your own theme files, or 'terminal' for Native Terminal. Set graph.style to 'sharp' if your terminal font lacks rounded arc glyphs.",
   },
   keybindings: {
     path: "$GITMINAL_KEYBINDINGS -> ~/.config/gitminal/keybindings.json",
@@ -517,7 +572,24 @@ const CONFIG_SNIPPETS = Object.freeze({
   "remote.pushForceOverwrite": []
 }`,
     notes:
-      "A string or array replaces the built-in binding, null restores the default, and [] unbinds the action. Reload config from the Command Palette (Ctrl+P) without restarting.",
+      "A string or array replaces the built-in binding, null restores the default, and [] unbinds the action. Theme picker actions (theme.tabLeft, theme.tabRight, theme.export) are overlay-scoped and rebindable like any other action. Reload config from the Command Palette (Ctrl+P) without restarting.",
+  },
+  "theme-file": {
+    path: "<config dir>/themes/hadi-ink.json (or $GITMINAL_THEMES_DIR)",
+    code: `{
+  "version": 1,
+  "name": "hadi-ink",
+  "label": "Hadi Ink",
+  "variant": "dark",
+  "extends": "flexoki-ink",
+  "colors": {
+    "accent": "#7fb3d5",
+    "background": "#101216",
+    "graph": ["#7fb3d5", "#a6e3a1", "#f9e2af", "#f38ba8"]
+  }
+}`,
+    notes:
+      "Every *.json file in this directory becomes a theme you can select by name. A theme that extends a built-in inherits every token it omits; a standalone theme must define all 24 tokens plus a graph list. Use Export in the theme picker to write a complete file to start from. A broken file degrades to one warning and never blocks launch.",
   },
   "truecolor-unix": {
     path: "~/.zshrc or ~/.bashrc (macOS, Linux, and WSL)",
@@ -528,7 +600,7 @@ env -u NO_COLOR COLORTERM=truecolor gitminal
 unset NO_COLOR
 export COLORTERM=truecolor`,
     notes:
-      "A non-empty NO_COLOR disables colors. Setting COLORTERM=truecolor enables full 24-bit Catppuccin palettes in WSL and Unix shells.",
+      "A non-empty NO_COLOR disables colors. Setting COLORTERM=truecolor enables full 24-bit palettes in WSL and Unix shells.",
   },
   "truecolor-ps": {
     path: "$PROFILE (Windows Terminal PowerShell)",
@@ -555,7 +627,13 @@ const REMOTE_SPECS = Object.freeze({
 const state = {
   installTab: "bun",
   graphStyle: "rounded",
-  simThemeIndex: 0,
+  simTheme: DEFAULT_SIM_THEME,
+  themePickerOpen: false,
+  themePickerTab: "dark",
+  themePickerQuery: "",
+  themePickerCursor: 0,
+  themePickerFooterFocus: null,
+  themePickerOriginalTheme: DEFAULT_SIM_THEME,
   consoleOpen: true,
   activeRegion: "6",
   selectedCommitIndex: 1,
@@ -1033,33 +1111,416 @@ function toggleGraphStyle() {
 }
 
 /**
- * Sets the simulator theme flavor and updates all theme pill buttons.
+ * Applies a simulator palette and refreshes every control that shows the active theme.
  *
- * @param {string} themeName - Theme identifier.
+ * @param {string} themeName - A key in SIM_THEMES; an unknown name falls back to the default.
  */
-function setSimulatorTheme(themeName) {
-  const idx = SIM_THEMES.indexOf(themeName);
-  state.simThemeIndex = Math.max(idx, 0);
-  const effective = SIM_THEMES[state.simThemeIndex] || "catppuccin-mocha";
+/**
+ * Paints a simulator element with every token of a palette.
+ *
+ * @param {HTMLElement} simulator - Simulator root element.
+ * @param {{ lanes: ReadonlyArray<string> }} spec - Palette supplying the tokens.
+ * @param {string} name - Theme name written to `data-sim-theme`.
+ */
+function applySimulatorPalette(simulator, spec, name) {
+  for (const [field, cssVar] of Object.entries(SIM_THEME_CSS_VARS)) {
+    simulator.style.setProperty(cssVar, spec[field]);
+  }
 
-  document.getElementById("tui-simulator")?.setAttribute("data-sim-theme", effective);
-  setTextById("sim-theme-label", effective);
+  SIM_LANE_CSS_VARS.forEach((cssVar, index) => {
+    simulator.style.setProperty(cssVar, spec.lanes[index] || spec.lanes[0]);
+  });
 
+  simulator.setAttribute("data-sim-theme", name);
+}
+
+/**
+ * Marks the swatch pill that matches the active theme.
+ *
+ * @param {string} name - Active theme name.
+ */
+function syncThemePills(name) {
   for (const pill of document.querySelectorAll("[data-theme-pick]")) {
-    pill.classList.toggle(
-      "swatch-pill--active",
-      pill.getAttribute("data-theme-pick") === effective,
-    );
+    pill.classList.toggle("swatch-pill--active", pill.getAttribute("data-theme-pick") === name);
   }
 }
 
 /**
- * Cycles to the next simulator theme flavor.
+ * Applies a simulator palette and refreshes every control that shows the active theme.
+ *
+ * @param {string} themeName - A key in SIM_THEMES; an unknown name falls back to the default.
  */
-function cycleSimulatorTheme() {
-  const nextIndex = (state.simThemeIndex + 1) % SIM_THEMES.length;
-  setSimulatorTheme(SIM_THEMES[nextIndex] || "catppuccin-mocha");
-  appendConsoleLog(`theme.resolve "${SIM_THEMES[nextIndex]}"`, "2ms");
+function setSimulatorTheme(themeName) {
+  const name = Object.hasOwn(SIM_THEMES, themeName) ? themeName : DEFAULT_SIM_THEME;
+  state.simTheme = name;
+
+  const simulator = document.getElementById("tui-simulator");
+  if (simulator instanceof HTMLElement) {
+    applySimulatorPalette(simulator, SIM_THEMES[name], name);
+  }
+
+  setTextById("sim-theme-label", name);
+  syncThemePills(name);
+  renderThemePicker();
+}
+
+/** Footer controls the theme picker cycles through with Left and Right. */
+const THEME_PICKER_ACTIONS = Object.freeze(["export", "cancel", "apply"]);
+
+/** Variant tabs in bar order. */
+const THEME_PICKER_TABS = Object.freeze(["dark", "light"]);
+
+/** Display labels of the variant tabs. */
+const THEME_PICKER_TAB_LABELS = Object.freeze({ dark: "Dark", light: "Light" });
+
+/** Status line the theme picker footer shows when nothing else happened. */
+const THEME_PICKER_STATUS = "40 built-in themes, plus Native Terminal and your own theme files";
+
+/**
+ * Lists the selectable themes in the active tab, filtered by the current query.
+ *
+ * Preview-only entries such as the NO_COLOR palette are excluded because they are
+ * outcomes of terminal capability, not names accepted by `config.json`.
+ *
+ * @returns {Array<{ name: string, label: string }>} Theme rows sorted by theme name.
+ */
+function getThemePickerThemes() {
+  const query = state.themePickerQuery.trim().toLowerCase();
+
+  return Object.entries(SIM_THEMES)
+    .filter(([, spec]) => !spec.previewOnly && spec.variant === state.themePickerTab)
+    .filter(([name, spec]) => !query || `${name} ${spec.label}`.toLowerCase().includes(query))
+    .map(([name, spec]) => ({ name, label: spec.label }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Reads the theme row the picker currently highlights.
+ *
+ * @returns {string} Highlighted theme name, or the active theme when the tab is empty.
+ */
+function getHighlightedThemeName() {
+  return getThemePickerThemes()[state.themePickerCursor]?.name || state.simTheme;
+}
+
+/**
+ * Resolves the display label of a variant tab.
+ *
+ * @param {string} variant - "dark" or "light".
+ * @returns {string} Tab label.
+ */
+function getThemePickerTabLabel(variant) {
+  return THEME_PICKER_TAB_LABELS[variant] || "Dark";
+}
+
+/**
+ * Applies the selected state and label of one variant tab.
+ *
+ * @param {Element} tab - Tab button.
+ * @param {string} variant - "dark" or "light".
+ */
+function applyThemePickerTabState(tab, variant) {
+  const selected = variant === state.themePickerTab;
+
+  tab.textContent = `${selected ? "> " : "  "}${getThemePickerTabLabel(variant)}`;
+  tab.classList.toggle("theme-picker__tab--active", selected);
+  tab.setAttribute("aria-selected", String(selected));
+}
+
+/**
+ * Renders the variant tab bar, keeping the selected tab prefixed with `>`.
+ */
+function renderThemePickerTabs() {
+  for (const tab of document.querySelectorAll("[data-theme-tab]")) {
+    applyThemePickerTabState(tab, tab.getAttribute("data-theme-tab") || "dark");
+  }
+}
+
+/**
+ * Renders the footer actions and marks the one that owns the keyboard, if any.
+ */
+function renderThemePickerActions() {
+  for (const button of document.querySelectorAll("[data-theme-action]")) {
+    const focused = button.getAttribute("data-theme-action") === state.themePickerFooterFocus;
+
+    button.classList.toggle("theme-picker__action--focused", focused);
+    button.setAttribute("aria-pressed", String(focused));
+  }
+}
+
+/**
+ * Renders the theme picker tabs, rows, and footer focus.
+ */
+function renderThemePicker() {
+  if (!state.themePickerOpen) {
+    return;
+  }
+
+  renderThemePickerTabs();
+  renderThemePickerActions();
+
+  const themes = getThemePickerThemes();
+  state.themePickerCursor =
+    themes.length > 0 ? Math.min(state.themePickerCursor, themes.length - 1) : 0;
+
+  if (themes.length === 0) {
+    const query = escapeHtml(state.themePickerQuery.trim());
+    setHtmlById(
+      "theme-picker-list",
+      `<div class="theme-picker__empty">No ${state.themePickerTab} themes match "${query}".</div>`,
+    );
+    return;
+  }
+
+  const html = themes
+    .map((theme, index) => {
+      const spec = SIM_THEMES[theme.name];
+      const active = index === state.themePickerCursor;
+
+      return `
+        <button type="button" class="palette__item theme-picker__row" data-active="${active}" data-theme-index="${index}">
+          <span class="palette__item-left">
+            <span class="palette__item-marker">${active ? "&gt;" : " "}</span>
+            <span class="theme-picker__swatch" style="background-color: ${spec.bg}; border-color: ${spec.border}">
+              <span class="theme-picker__swatch-dot" style="background-color: ${spec.focus}"></span>
+            </span>
+            <span class="theme-picker__label">${escapeHtml(theme.label)}</span>
+            <code class="palette__item-id">(${escapeHtml(theme.name)})</code>
+          </span>
+        </button>`;
+    })
+    .join("");
+
+  setHtmlById("theme-picker-list", html);
+}
+
+/**
+ * Scrolls the highlighted theme row into view inside the picker list.
+ */
+function scrollThemePickerRowIntoView() {
+  document
+    .querySelector(`[data-theme-index="${state.themePickerCursor}"]`)
+    ?.scrollIntoView({ block: "nearest" });
+}
+
+/**
+ * Shows a variant tab and highlights its first theme.
+ *
+ * @param {string} variant - "dark" or "light".
+ */
+function setThemePickerTab(variant) {
+  state.themePickerTab = THEME_PICKER_TABS.includes(variant) ? variant : "dark";
+  state.themePickerCursor = 0;
+  setSimulatorTheme(getHighlightedThemeName());
+  scrollThemePickerRowIntoView();
+}
+
+/**
+ * Steps the variant tab bar by one position and wraps.
+ *
+ * @param {number} direction - -1 for the previous tab, 1 for the next.
+ */
+function stepThemePickerTab(direction) {
+  const index = THEME_PICKER_TABS.indexOf(state.themePickerTab);
+  const next = (index + direction + THEME_PICKER_TABS.length) % THEME_PICKER_TABS.length;
+
+  setThemePickerTab(THEME_PICKER_TABS[next] || "dark");
+}
+
+/**
+ * Moves the highlight by delta, wrapping, and previews the newly highlighted theme.
+ *
+ * @param {number} delta - Step offset (+1 or -1).
+ */
+function moveThemePickerCursor(delta) {
+  const themes = getThemePickerThemes();
+  if (themes.length === 0) {
+    return;
+  }
+
+  state.themePickerCursor = (state.themePickerCursor + delta + themes.length) % themes.length;
+  setSimulatorTheme(getHighlightedThemeName());
+  scrollThemePickerRowIntoView();
+}
+
+/**
+ * Moves the keyboard to the footer actions and steps through them with wraparound.
+ *
+ * @param {number} direction - -1 for left, 1 for right.
+ */
+function moveThemePickerFooter(direction) {
+  const index = THEME_PICKER_ACTIONS.indexOf(state.themePickerFooterFocus);
+
+  if (index < 0) {
+    state.themePickerFooterFocus =
+      direction > 0
+        ? THEME_PICKER_ACTIONS[0]
+        : THEME_PICKER_ACTIONS[THEME_PICKER_ACTIONS.length - 1];
+  } else {
+    const next = (index + direction + THEME_PICKER_ACTIONS.length) % THEME_PICKER_ACTIONS.length;
+    state.themePickerFooterFocus = THEME_PICKER_ACTIONS[next];
+  }
+
+  renderThemePickerActions();
+}
+
+/**
+ * Writes the highlighted theme to a user theme file and reports it in the footer.
+ */
+function exportHighlightedTheme() {
+  const name = getHighlightedThemeName();
+  const fileBase = name === "terminal" ? "native-terminal" : `${name}-custom`;
+  const fileName = `${fileBase}.json`;
+
+  setTextById("theme-picker-status", `Theme exported: ${fileName}`);
+  appendConsoleLog(`theme.export "${name}" -> themes/${fileName}`, "3ms");
+}
+
+/**
+ * Runs one theme picker footer action.
+ *
+ * @param {string|null} action - "export", "cancel", "apply", or null for the default apply.
+ */
+function runThemePickerAction(action) {
+  if (action === "cancel") {
+    setSimulatorTheme(state.themePickerOriginalTheme);
+    closeThemePicker();
+    return;
+  }
+
+  if (action === "export") {
+    exportHighlightedTheme();
+    return;
+  }
+
+  const name = getHighlightedThemeName();
+  setSimulatorTheme(name);
+  setTextById("tui-status-message", `\u2713 theme applied: ${name}`);
+  appendConsoleLog(`theme.resolve "${name}"`, "2ms");
+  closeThemePicker();
+}
+
+/**
+ * Dismisses the theme picker, restoring the theme that was active before it opened.
+ */
+function cancelThemePicker() {
+  runThemePickerAction("cancel");
+}
+
+/**
+ * Shows or hides the theme picker modal.
+ *
+ * @param {boolean} hidden - True to hide the modal.
+ */
+function setThemePickerModalHidden(hidden) {
+  const modal = document.getElementById("theme-picker-modal");
+  if (modal) {
+    modal.hidden = hidden;
+  }
+}
+
+/**
+ * Resets the theme picker state for a fresh open and highlights the active theme.
+ */
+function resetThemePickerState() {
+  state.themePickerOpen = true;
+  state.themePickerOriginalTheme = state.simTheme;
+  state.themePickerTab = SIM_THEMES[state.simTheme]?.variant === "light" ? "light" : "dark";
+  state.themePickerQuery = "";
+  state.themePickerFooterFocus = null;
+
+  const input = document.getElementById("theme-picker-search");
+  if (input instanceof HTMLInputElement) {
+    input.value = "";
+  }
+
+  const activeIndex = getThemePickerThemes().findIndex((theme) => theme.name === state.simTheme);
+  state.themePickerCursor = Math.max(activeIndex, 0);
+}
+
+/**
+ * Opens the theme picker on the active theme's tab and highlights the active theme.
+ */
+function openThemePicker() {
+  if (state.paletteOpen) {
+    setPaletteOpen(false);
+  }
+
+  resetThemePickerState();
+  setTextById("theme-picker-status", THEME_PICKER_STATUS);
+  setThemePickerModalHidden(false);
+  renderThemePicker();
+  document.getElementById("theme-picker-list")?.focus();
+}
+
+/**
+ * Closes the theme picker and clears its keyboard focus.
+ */
+function closeThemePicker() {
+  state.themePickerOpen = false;
+  state.themePickerFooterFocus = null;
+  setThemePickerModalHidden(true);
+
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+}
+
+/**
+ * Theme picker key bindings in match order.
+ *
+ * Bindings marked `always` also fire while the search field has focus; character
+ * keys stay out of the way so the visitor can type a query. Rows and the active
+ * tab take the arrow keys from any zone, exactly like the terminal picker.
+ */
+const THEME_PICKER_KEY_BINDINGS = Object.freeze([
+  { keys: ["Escape"], always: true, run: cancelThemePicker },
+  { keys: ["ArrowDown"], always: true, run: () => moveThemePickerCursor(1) },
+  { keys: ["ArrowUp"], always: true, run: () => moveThemePickerCursor(-1) },
+  { keys: ["Enter"], always: true, run: applyFocusedThemePickerAction },
+  { keys: ["j"], run: () => moveThemePickerCursor(1) },
+  { keys: ["k"], run: () => moveThemePickerCursor(-1) },
+  { keys: ["["], run: () => stepThemePickerTab(-1) },
+  { keys: ["]"], run: () => stepThemePickerTab(1) },
+  { keys: ["ArrowLeft"], always: true, run: () => moveThemePickerFooter(-1) },
+  { keys: ["ArrowRight"], always: true, run: () => moveThemePickerFooter(1) },
+  { keys: ["h"], run: () => moveThemePickerFooter(-1) },
+  { keys: ["l"], run: () => moveThemePickerFooter(1) },
+  { keys: ["e"], run: exportHighlightedTheme },
+  { keys: ["/"], run: focusThemePickerSearch },
+]);
+
+/**
+ * Runs the theme picker footer action that owns the keyboard, defaulting to apply.
+ */
+function applyFocusedThemePickerAction() {
+  runThemePickerAction(state.themePickerFooterFocus || "apply");
+}
+
+/**
+ * Moves keyboard focus to the theme picker search field.
+ */
+function focusThemePickerSearch() {
+  document.getElementById("theme-picker-search")?.focus();
+}
+
+/**
+ * Handles keyboard input inside the open theme picker.
+ *
+ * @param {KeyboardEvent} event - DOM keydown event.
+ */
+function handleThemePickerKeydown(event) {
+  const isTyping = event.target instanceof HTMLInputElement;
+  const binding = THEME_PICKER_KEY_BINDINGS.find(
+    (candidate) => candidate.keys.includes(event.key) && (candidate.always || !isTyping),
+  );
+
+  if (!binding) {
+    return;
+  }
+
+  event.preventDefault();
+  binding.run();
 }
 
 /**
@@ -1264,10 +1725,10 @@ function getPaletteCommands() {
       run: toggleGraphStyle,
     },
     {
-      label: "Cycle Workbench Catppuccin Theme",
+      label: "Open Theme Picker (Dark / Light tabs)",
       id: "app.themePicker",
       key: "t",
-      run: cycleSimulatorTheme,
+      run: openThemePicker,
     },
     {
       label: "Toggle Git Console Drawer",
@@ -1364,6 +1825,22 @@ function renderPaletteList() {
 }
 
 /**
+ * Resets the palette query, highlight, and search field for a fresh open.
+ */
+function resetPaletteState() {
+  state.paletteQuery = "";
+  state.paletteCursor = 0;
+
+  const input = document.getElementById("palette-search-input");
+  if (input instanceof HTMLInputElement) {
+    input.value = "";
+    input.focus();
+  }
+
+  renderPaletteList();
+}
+
+/**
  * Opens or closes the interactive Command Palette modal.
  *
  * @param {boolean} open - True to open, false to close.
@@ -1374,19 +1851,17 @@ function setPaletteOpen(open) {
   if (!modal) {
     return;
   }
+
   modal.hidden = !open;
   if (!open) {
     return;
   }
 
-  state.paletteQuery = "";
-  state.paletteCursor = 0;
-  const input = document.getElementById("palette-search-input");
-  if (input instanceof HTMLInputElement) {
-    input.value = "";
-    input.focus();
+  if (state.themePickerOpen) {
+    closeThemePicker();
   }
-  renderPaletteList();
+
+  resetPaletteState();
 }
 
 /**
@@ -1476,7 +1951,7 @@ const SINGLE_KEY_ACTIONS = Object.freeze({
   ArrowUp: () => selectCommitByIndex(state.selectedCommitIndex - 1),
   g: toggleGraphStyle,
   G: () => selectCommitByIndex(getFilteredCommits().length - 1),
-  t: cycleSimulatorTheme,
+  t: openThemePicker,
   y: copyActiveInstallCommand,
   "/": focusGraphSearchInput,
 });
@@ -1517,6 +1992,10 @@ function handleGlobalKeydown(event) {
   if (isPaletteChord(event)) {
     event.preventDefault();
     setPaletteOpen(!state.paletteOpen);
+    return;
+  }
+  if (state.themePickerOpen) {
+    handleThemePickerKeydown(event);
     return;
   }
   if (state.paletteOpen) {
@@ -1674,7 +2153,7 @@ function bindWorkbenchEvents() {
 
   document.getElementById("toggle-graph-style-btn")?.addEventListener("click", toggleGraphStyle);
   document.getElementById("footer-graph-trigger")?.addEventListener("click", toggleGraphStyle);
-  document.getElementById("cycle-theme-btn")?.addEventListener("click", cycleSimulatorTheme);
+  document.getElementById("cycle-theme-btn")?.addEventListener("click", openThemePicker);
   document.getElementById("toggle-console-btn")?.addEventListener("click", toggleConsoleDrawer);
   document.getElementById("footer-console-trigger")?.addEventListener("click", toggleConsoleDrawer);
   document.getElementById("clear-console-btn")?.addEventListener("click", () => {
@@ -1816,6 +2295,90 @@ function bindPaletteEvents() {
 }
 
 /**
+ * Binds the controls that open the theme picker.
+ */
+function bindThemePickerOpeners() {
+  for (const id of ["cycle-theme-btn", "footer-theme-trigger", "open-theme-picker-btn"]) {
+    document.getElementById(id)?.addEventListener("click", openThemePicker);
+  }
+}
+
+/**
+ * Binds the controls that dismiss the theme picker.
+ */
+function bindThemePickerDismissers() {
+  for (const id of ["close-theme-picker-btn", "theme-picker-backdrop"]) {
+    document.getElementById(id)?.addEventListener("click", cancelThemePicker);
+  }
+}
+
+/**
+ * Binds the variant tabs so a click switches variant.
+ */
+function bindThemePickerTabs() {
+  for (const tab of document.querySelectorAll("[data-theme-tab]")) {
+    tab.addEventListener("click", () =>
+      setThemePickerTab(tab.getAttribute("data-theme-tab") || "dark"),
+    );
+  }
+}
+
+/**
+ * Binds the search field so typing filters the list and previews the highlight.
+ */
+function bindThemePickerSearch() {
+  const searchInput = document.getElementById("theme-picker-search");
+  if (searchInput instanceof HTMLInputElement) {
+    searchInput.addEventListener("input", () => {
+      state.themePickerQuery = searchInput.value;
+      state.themePickerCursor = 0;
+      setSimulatorTheme(getHighlightedThemeName());
+      scrollThemePickerRowIntoView();
+    });
+  }
+}
+
+/**
+ * Binds theme rows so a click highlights and previews that theme.
+ */
+function bindThemePickerRows() {
+  document.getElementById("theme-picker-list")?.addEventListener("click", (event) => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    const row = target?.closest("[data-theme-index]");
+    if (!row) {
+      return;
+    }
+
+    state.themePickerCursor = Number(row.getAttribute("data-theme-index") || "0");
+    setSimulatorTheme(getHighlightedThemeName());
+  });
+}
+
+/**
+ * Binds the theme picker footer action buttons.
+ */
+function bindThemePickerFooterActions() {
+  for (const button of document.querySelectorAll("[data-theme-action]")) {
+    button.addEventListener("click", () => {
+      runThemePickerAction(button.getAttribute("data-theme-action") || "apply");
+    });
+  }
+}
+
+/**
+ * Binds events for the interactive Theme Picker modal.
+ */
+function bindThemePickerEvents() {
+  bindThemePickerOpeners();
+  bindThemePickerDismissers();
+  bindThemePickerTabs();
+  bindThemePickerSearch();
+  bindThemePickerRows();
+  bindThemePickerFooterActions();
+  setThemePickerModalHidden(true);
+}
+
+/**
  * CSS selector for blocks that fade and rise into view on scroll.
  */
 const REVEAL_SELECTOR =
@@ -1874,6 +2437,7 @@ function initApp() {
   bindKeymapEvents();
   bindConfigEvents();
   bindPaletteEvents();
+  bindThemePickerEvents();
   initScrollReveal();
 }
 

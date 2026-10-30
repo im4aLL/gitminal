@@ -5,7 +5,7 @@ import { useFocusRegion } from "@/app/hooks/useFocusRegion";
 import { ConfigProvider } from "@/app/providers/ConfigProvider";
 import { FocusProvider } from "@/app/providers/FocusProvider";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
-import { DEFAULT_THEME_NAME } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME } from "@/domain/theme/theme.registry";
 import { resolveTheme } from "@/domain/theme/theme.resolve";
 
 /** Latest handle captured by the probe. */

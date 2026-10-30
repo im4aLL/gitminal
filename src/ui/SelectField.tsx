@@ -9,7 +9,10 @@ import { useTokens } from "@/theme/useTokens";
  * the selected option's value instead of its index. `onChange` fires when native navigation moves
  * the selection, and `onSelect` fires when the focused option is confirmed. The stable id lets the
  * owning feature focus the control through `FocusProvider`. Its viewport may shrink inside a
- * terminal-clamped modal, keeping subsequent controls visible while native navigation scrolls.
+ * terminal-clamped modal, keeping subsequent controls visible while native navigation scrolls, and
+ * the scroll indicator marks a list that has more options than its viewport shows. Descriptions use
+ * the diff context tone, so every select list paints secondary text the way the diff paints context
+ * lines.
  *
  * @param props - Stable id, options, optional selection and focus state, and change handlers.
  * @returns The composed select field.
@@ -60,14 +63,15 @@ export function SelectField(props: {
       focused={props.focused}
       height={props.height}
       flexShrink={1}
+      showScrollIndicator
       backgroundColor={tokens.surface}
       textColor={tokens.text}
       focusedBackgroundColor={tokens.surface}
       focusedTextColor={tokens.text}
       selectedBackgroundColor={tokens.selection}
       selectedTextColor={tokens.text}
-      descriptionColor={tokens.dim}
-      selectedDescriptionColor={tokens.muted}
+      descriptionColor={tokens.diffContext}
+      selectedDescriptionColor={tokens.diffContext}
       onChange={handleChange}
       onSelect={handleSelect}
     />

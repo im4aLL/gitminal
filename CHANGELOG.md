@@ -2,6 +2,38 @@
 
 All notable changes to Gitminal are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-10-30
+
+### Added
+
+- Theme picker keys. `[` and `]` switch the `Dark` and `Light` tabs from any focus zone and wrap, and `e` exports the highlighted theme to a user theme file without closing the picker. The three are overlay-scoped actions (`theme.tabLeft`, `theme.tabRight`, `theme.export`), so they are rebindable through `keybindings.json`; while the search field has focus those characters reach the field instead. Up and Down (or `j` and `k`) now always move the highlight and hand the keyboard to the list from any zone, Left and Right (or `h` and `l`) always move the keyboard to the footer buttons and wrap through them, and the selected tab no longer paints the native underline border. The footer advertises the theme picker keys and both bindings of each movement action while the modal is open.
+- User theme files. Every `*.json` file in the themes directory (`<config dir>/themes`, or `$GITMINAL_THEMES_DIR`) is a theme you can select by name. A file is the `theme.json` color schema plus `version`, `name`, `label`, `variant`, and `extends`, and missing tokens resolve against a built-in base; a standalone theme must define all 24 tokens plus its graph lanes. Broken, shadowing, oversized, and non-JSON files degrade to one bounded warning and never prevent launch.
+- Theme picker tabs and ordering. The picker has `Dark` and `Light` tabs, opens on the active theme's tab, sorts by theme name inside each tab with built-in and user themes interleaved, filters inside the active tab, and states why a tab is empty. Focus cycles through the tab bar, the rows, and the footer actions; the tab bar is rendered without native focus, so Up, Down, and Enter keep working on the rows, and it shows its focus zone in text by brightening its labels and prefixing the selected tab with `>`.
+- Theme export. The picker's `Export` footer control writes the highlighted theme as a complete standalone file in the themes directory, creating the directory when needed and refusing to overwrite an existing file. A built-in is written with a `-custom` suffix and Native Terminal as `native-terminal`, so an exported file never shadows the theme it came from.
+- Native Terminal theme. A `terminal` entry detected from the terminal itself through `renderer.getPalette` (OSC 4, 10, and 11), mapped onto every token, with guarded secondary text and diff line backgrounds, a derived light or dark tab, and a 150 ms bounded startup query that runs concurrently with the configuration read. A terminal that cannot answer falls back to Catppuccin Mocha with one warning, and `app.reloadConfig` re-detects after a terminal profile change.
+- `$GITMINAL_THEMES_DIR`, which relocates the user themes directory the same way `$GITMINAL_THEME` relocates `theme.json`.
+- Help now reports the active theme's variant and source, and the resolved themes directory.
+- The final five theme families, one theme each: Srcery, Iceberg, Night Owl, Jellybeans, and Tender. All five are MIT licensed. Srcery and Jellybeans use their own diff fills where the upstream fill clears the contrast floor, and Night Owl's selected-row fill is its published selection alpha flattened over the background.
+- Five more theme families, one theme each: Noctis (default), Sonokai (default), Zenbones (Zenwritten dark), Tomorrow (base light), and Seoul256 (dark). Noctis, Sonokai, Zenbones, Tomorrow, and Seoul256 are all MIT licensed. Sonokai uses upstream's `bg_green` and `bg_red` diff fills and Seoul256 uses its own DiffAdd and DiffDelete fills.
+- Five new theme families, one theme each: Kanagawa (Wave), Everforest (medium dark), Ayu (dark), Nightfox (default), and GitHub Light. Kanagawa and Everforest use upstream's own diff line backgrounds, GitHub Light uses Primer's `diffBlob` line fills, and Ayu's selected-row fill is the published selection alpha flattened over its background. All five are MIT licensed. New families now ship exactly one theme, the variant upstream treats as primary, so the picker gains distinct looks instead of brightness ladders.
+- Twenty-one new built-in themes across ten palette families, bringing the catalogue to twenty-five: Tokyo Night (Night, Storm, Moon, Day), Gruvbox (Dark, Light), Nord, Rose Pine (Main, Moon, Dawn), Flexoki (Ink, Paper), Dracula (Dracula, Alucard), Atom One (Dark, Light), Solarized (Dark, Light), Zenburn, and High Contrast (Dark, Light). Each family owns its colors in its own module under `src/domain/theme/themes/`, and the registry flattens them into one picker order.
+- Theme search in the picker. The modal has a search field that filters by name and label, and Up, Down, and Enter keep working while it is focused.
+- A checked legibility floor for every built-in theme. `theme.contrast.test.ts` enforces WCAG contrast for primary text, secondary text, selection text, accents, diff signs on their own backgrounds, and status hues, and the picker list now caps its visible rows and scrolls the highlighted theme into view.
+- A WCAG contrast helper at `src/domain/theme/theme.contrast.ts` in the domain layer.
+
+### Changed
+
+- Footer hints group related chords. Focused lists advertise `Up/Down/j/k Move` instead of separate up and down hints, and the diff panel advertises `J/K/H/L Scroll` for all four viewport directions, so every valid diff hint including the `S`/`U`/`D` bulk verbs and the `Right`/`Left` expand and collapse keys fits on one line at 160 columns. Diff catalogue labels shorten to `Toggle`, `Stage`, `Unstage`, `Discard`, and `Discard all`, and a group falls back to its individual hints when one member is unavailable. Modal hints keep their per-action bindings.
+
+- The theme surface splits into one hook per concern. `ThemeProvider` is now a composition root over `useThemeSession` and `useResolvedTheme`, and the picker's view state composes `useThemePickerRows`, `useThemePickerHighlight`, `useThemePickerVariant`, `useThemePickerFocus`, and `useThemePickerSession`, so no hook exceeds the complexity ceiling the pre-commit gate enforces.
+- The theme picker drops the per-row light-or-dark label, because the tab bar states it.
+- `ThemeProvider` resolves against the catalogue the configuration loader built, so a reload lists new user themes without a restart.
+- `help.search` is now `overlay.search`, because the help modal and the theme picker share one "focus this overlay's search field" action. A `keybindings.json` entry for `help.search` is reported as an unknown action and ignored.
+- Catppuccin Latte's `diffAddBackground` is now lighter so the official green reaches the enforced 3:1 floor.
+- Three upstream palettes needed a documented legibility adjustment. One Light, Solarized Light, and Tokyo Night Day use the same official diff-sign hues a few points darker, and Solarized assigns body text to the more legible member of its base pair, because the published values cannot reach the enforced contrast floors on their own paper backgrounds. Every other token keeps the published value, and each adjustment is explained in the family module.
+- The theme token module split into `theme.registry.ts`, `theme.mono.ts`, and one module per palette family under `themes/`. `theme.catppuccin.ts` is gone, and `THEME_FLAVORS` is now `THEMES` with `getThemeDefinition` replacing `getThemeFlavor`.
+- Hex color literals are now allowed anywhere under `src/domain/theme/themes/` plus `theme.mono.ts`, instead of one Catppuccin module.
+
 ## [1.4.0] - 2026-10-29
 
 ### Added

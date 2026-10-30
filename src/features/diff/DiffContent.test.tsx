@@ -3,7 +3,7 @@ import { type CapturedFrame, type CapturedSpan, RGBA } from "@opentui/core";
 import { testRender } from "@opentui/react/test-utils";
 import { act } from "react";
 import type { DiffLoadState, DiffSegment, FileDiff } from "@/domain/diff/diff.types";
-import { THEME_FLAVORS } from "@/domain/theme/theme.catppuccin";
+import { THEMES } from "@/domain/theme/theme.registry";
 import { DiffContent } from "@/features/diff/DiffContent";
 import { readDiffContentWidth } from "@/features/diff/diffContent.layout";
 import { ShellTestProviders } from "@/test/shell.harness";
@@ -262,7 +262,7 @@ describe("DiffContent", () => {
       "catppuccin-latte",
     );
     const code = findSpanContaining(setup.captureSpans(), "context line");
-    const expected = THEME_FLAVORS["catppuccin-latte"].tokens.text;
+    const expected = THEMES["catppuccin-latte"].tokens.text;
 
     expect(code.fg.equals(RGBA.fromHex(expected))).toBe(true);
 
@@ -273,7 +273,7 @@ describe("DiffContent", () => {
 
   it("highlights a keyword when the filetype has a registered parser", async () => {
     const setup = await renderContent(loadedState({ segments: [KEYWORD_SEGMENT] }), "src/app.ts");
-    const accent = THEME_FLAVORS["catppuccin-mocha"].tokens.accent;
+    const accent = THEMES["catppuccin-mocha"].tokens.accent;
     const span = await waitForSpanColor(setup, "const", RGBA.fromHex(accent));
 
     expect(span).not.toBeNull();
@@ -285,7 +285,7 @@ describe("DiffContent", () => {
 
   it("keeps the text color when no registered parser matches the filetype", async () => {
     const setup = await renderContent(loadedState({ segments: [KEYWORD_SEGMENT] }), "notes.txt");
-    const text = THEME_FLAVORS["catppuccin-mocha"].tokens.text;
+    const text = THEMES["catppuccin-mocha"].tokens.text;
 
     await act(async () => {
       await setup.renderOnce();

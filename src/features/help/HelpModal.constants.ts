@@ -29,7 +29,7 @@ export const HELP_MODAL_HEIGHT = 26;
 export const HELP_MODAL_CHROME_COLUMNS = 4;
 
 /** Action id that focuses the search field. */
-export const HELP_SEARCH_ACTION_ID = "help.search";
+export const HELP_SEARCH_ACTION_ID = "overlay.search";
 
 /** Action id that clears the search and then closes help. */
 export const HELP_CLOSE_ACTION_ID = "overlay.close";

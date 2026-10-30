@@ -1,6 +1,7 @@
 import type { ActionScope } from "@/app/hooks/useAction.types";
 import type { ActionId } from "@/domain/keymap/keymap.defaults";
 import type { KeymapContext } from "@/domain/keymap/keymap.types";
+import type { FooterHintGroup } from "@/features/shell/Footer.hints.types";
 
 /**
  * Contextual actions the footer never advertises because their keys are self-evident.
@@ -85,21 +86,63 @@ export const SELECTION_HINT_ACTIONS: ReadonlySet<string> = Object.freeze(new Set
 /**
  * Actions the footer advertises while a modal owns the keyboard.
  *
- * Labels come from the action catalogue so help, the palette, and the footer stay aligned. The
- * list only chooses which actions and scopes are modal-relevant. `focus.next` is deliberately absent:
- * the palette renders its own field-traversal hint inside the modal, and every other modal has no
- * such cycle to advertise.
+ * Labels come from the action catalogue so help, the palette, and the footer stay aligned, and every
+ * effective binding is shown for a hint so a modal that accepts both arrows and letters advertises
+ * both. The list only chooses which actions and scopes are modal-relevant. `focus.next` is
+ * deliberately absent: the palette renders its own field-traversal hint inside the modal, and every
+ * other modal has no such cycle to advertise. Esc is ranked second so it survives width shrinking,
+ * and the three `theme.*` actions plus `overlay.search` appear only while their owner (the theme
+ * picker) has registered overlay handlers.
  */
 export const MODAL_HINT_ACTIONS: readonly {
   readonly actionId: ActionId;
   readonly scope: ActionScope;
 }[] = Object.freeze([
   { actionId: "nav.activate", scope: "overlay" },
+  { actionId: "overlay.close", scope: "global" },
   { actionId: "nav.up", scope: "overlay" },
   { actionId: "nav.down", scope: "overlay" },
-  { actionId: "nav.pageUp", scope: "overlay" },
-  { actionId: "nav.pageDown", scope: "overlay" },
   { actionId: "nav.left", scope: "overlay" },
   { actionId: "nav.right", scope: "overlay" },
-  { actionId: "overlay.close", scope: "global" },
+  { actionId: "theme.tabLeft", scope: "overlay" },
+  { actionId: "theme.tabRight", scope: "overlay" },
+  { actionId: "theme.export", scope: "overlay" },
+  { actionId: "overlay.search", scope: "overlay" },
+  { actionId: "nav.pageUp", scope: "overlay" },
+  { actionId: "nav.pageDown", scope: "overlay" },
+]);
+
+/**
+ * Action groups the footer advertises as one compact hint.
+ *
+ * Grouping keeps the footer on one line without hiding valid chords: the move group shows the arrow
+ * and letter bindings of both list directions, and the diff scroll group collapses the four
+ * viewport directions into one hint. Each key slot names an action and a binding index, so the
+ * merged keys still come from the resolved keymap and follow a rebinding. A group is dropped in
+ * favour of its individual hints whenever one of its actions is unavailable, which keeps
+ * selection-dependent verbs honest. Groups must be disjoint, and the merged hint keeps the earliest
+ * member position and the best member priority so width shrinking behaves like the ungrouped list.
+ * Modal hints are built from `MODAL_HINT_ACTIONS` and never pass through this compaction.
+ */
+export const FOOTER_HINT_GROUPS: readonly FooterHintGroup[] = Object.freeze([
+  Object.freeze({
+    id: "footer.group.diffScroll",
+    label: "Scroll",
+    keys: Object.freeze([
+      Object.freeze({ actionId: "diff.scrollDown", bindingIndex: 0 }),
+      Object.freeze({ actionId: "diff.scrollUp", bindingIndex: 0 }),
+      Object.freeze({ actionId: "diff.scrollLeft", bindingIndex: 0 }),
+      Object.freeze({ actionId: "diff.scrollRight", bindingIndex: 0 }),
+    ]),
+  }),
+  Object.freeze({
+    id: "footer.group.move",
+    label: "Move",
+    keys: Object.freeze([
+      Object.freeze({ actionId: "nav.up", bindingIndex: 0 }),
+      Object.freeze({ actionId: "nav.down", bindingIndex: 0 }),
+      Object.freeze({ actionId: "nav.down", bindingIndex: 1 }),
+      Object.freeze({ actionId: "nav.up", bindingIndex: 1 }),
+    ]),
+  }),
 ]);

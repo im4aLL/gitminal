@@ -6,6 +6,7 @@ import { useHotkeys } from "@/app/hooks/useHotkeys";
 import { useThemePickerAction } from "@/app/hooks/useThemePickerAction";
 import type { ConfigSnapshot } from "@/app/providers/ConfigProvider.types";
 import { DEFAULT_CONFIG, UNRESOLVED_CONFIG_PATHS } from "@/domain/config/config.defaults";
+import { createBuiltInCatalogue } from "@/domain/theme/theme.catalogue";
 import { OverlayHost } from "@/features/overlays/OverlayHost";
 import { AppTestProviders } from "@/test/app.harness";
 import { createFakeGitClient } from "@/test/git.fake";
@@ -19,6 +20,7 @@ const SNAPSHOT: ConfigSnapshot = {
   warnings: Object.freeze([]),
   keybindingsFile: Object.freeze({}),
   themeOverrides: null,
+  catalogue: createBuiltInCatalogue(),
 };
 
 /**

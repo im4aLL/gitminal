@@ -40,6 +40,7 @@ describe("resolveConfigPaths on POSIX", () => {
       config: explicit,
       keybindings: path.join("/custom", "keybindings.json"),
       theme: path.join("/custom", "theme.json"),
+      themesDir: path.join("/custom", "themes"),
     });
   });
 
@@ -51,6 +52,7 @@ describe("resolveConfigPaths on POSIX", () => {
       config: path.join(directory, "config.json"),
       keybindings: path.join(directory, "keybindings.json"),
       theme: path.join(directory, "theme.json"),
+      themesDir: path.join(directory, "themes"),
     });
   });
 
@@ -76,13 +78,21 @@ describe("resolveConfigPaths on POSIX", () => {
     expect(paths.config).toBe(explicit);
   });
 
-  it("honors GITMINAL_KEYBINDINGS and GITMINAL_THEME over the companion defaults", () => {
+  it("honors the keybindings, theme, and themes directory overrides", () => {
     const keybindings = path.join("/custom", "keys.json");
     const theme = path.join("/custom", "colors.json");
-    const paths = resolve({ env: { GITMINAL_KEYBINDINGS: keybindings, GITMINAL_THEME: theme } });
+    const themesDir = path.join("/custom", "palettes");
+    const paths = resolve({
+      env: {
+        GITMINAL_KEYBINDINGS: keybindings,
+        GITMINAL_THEME: theme,
+        GITMINAL_THEMES_DIR: themesDir,
+      },
+    });
 
     expect(paths.keybindings).toBe(keybindings);
     expect(paths.theme).toBe(theme);
+    expect(paths.themesDir).toBe(themesDir);
   });
 
   it("ignores blank overrides and blank environment values", () => {
@@ -91,6 +101,7 @@ describe("resolveConfigPaths on POSIX", () => {
         GITMINAL_CONFIG: "  ",
         GITMINAL_KEYBINDINGS: "",
         GITMINAL_THEME: "   ",
+        GITMINAL_THEMES_DIR: "  ",
         XDG_CONFIG_HOME: " ",
       },
     });
@@ -99,6 +110,7 @@ describe("resolveConfigPaths on POSIX", () => {
     expect(paths.config).toBe(path.join(directory, "config.json"));
     expect(paths.keybindings).toBe(path.join(directory, "keybindings.json"));
     expect(paths.theme).toBe(path.join(directory, "theme.json"));
+    expect(paths.themesDir).toBe(path.join(directory, "themes"));
   });
 
   it("resolves a relative GITMINAL_CONFIG against the launch working directory", () => {
@@ -109,16 +121,22 @@ describe("resolveConfigPaths on POSIX", () => {
       config: path.join(directory, "gitminal.json"),
       keybindings: path.join(directory, "keybindings.json"),
       theme: path.join(directory, "theme.json"),
+      themesDir: path.join(directory, "themes"),
     });
   });
 
-  it("resolves relative keybindings and theme overrides against the launch directory", () => {
+  it("resolves relative overrides against the launch directory", () => {
     const paths = resolve({
-      env: { GITMINAL_KEYBINDINGS: "keys.json", GITMINAL_THEME: "colors.json" },
+      env: {
+        GITMINAL_KEYBINDINGS: "keys.json",
+        GITMINAL_THEME: "colors.json",
+        GITMINAL_THEMES_DIR: "themes",
+      },
     });
 
     expect(paths.keybindings).toBe(path.join(LAUNCH_DIR, "keys.json"));
     expect(paths.theme).toBe(path.join(LAUNCH_DIR, "colors.json"));
+    expect(paths.themesDir).toBe(path.join(LAUNCH_DIR, "themes"));
   });
 
   it("ignores a relative override when the launch working directory is unavailable", () => {
@@ -139,13 +157,13 @@ describe("resolveConfigPaths on POSIX", () => {
   it("ignores a relative home directory", () => {
     const paths = resolve({ env: {}, homeDir: path.join("home", "tester") });
 
-    expect(paths).toEqual({ config: null, keybindings: null, theme: null });
+    expect(paths).toEqual({ config: null, keybindings: null, theme: null, themesDir: null });
   });
 
   it("reports unresolved paths when no location exists", () => {
     const paths = resolve({ env: { APPDATA: APPDATA_DIR }, homeDir: "" });
 
-    expect(paths).toEqual({ config: null, keybindings: null, theme: null });
+    expect(paths).toEqual({ config: null, keybindings: null, theme: null, themesDir: null });
   });
 });
 
@@ -176,7 +194,7 @@ describe("resolveConfigPaths on Windows", () => {
   it("reports unresolved paths when APPDATA is blank", () => {
     const paths = resolve({ env: { APPDATA: " " }, platform: "windows", homeDir: "" });
 
-    expect(paths).toEqual({ config: null, keybindings: null, theme: null });
+    expect(paths).toEqual({ config: null, keybindings: null, theme: null, themesDir: null });
   });
 
   it("resolves a relative GITMINAL_CONFIG against the launch working directory", () => {
@@ -205,17 +223,22 @@ describe("resolveConfigPaths on Windows", () => {
       homeDir: "",
     });
 
-    expect(paths).toEqual({ config: null, keybindings: null, theme: null });
+    expect(paths).toEqual({ config: null, keybindings: null, theme: null, themesDir: null });
   });
 });
 
 describe("resolveConfigPaths with a missing home directory", () => {
   it("returns companion overrides even when no base directory resolves", () => {
     const keybindings = path.join("/custom", "keys.json");
-    const paths = resolve({ env: { GITMINAL_KEYBINDINGS: keybindings }, homeDir: "" });
+    const themesDir = path.join("/custom", "themes");
+    const paths = resolve({
+      env: { GITMINAL_KEYBINDINGS: keybindings, GITMINAL_THEMES_DIR: themesDir },
+      homeDir: "",
+    });
 
     expect(paths.config).toBeNull();
     expect(paths.keybindings).toBe(keybindings);
     expect(paths.theme).toBeNull();
+    expect(paths.themesDir).toBe(themesDir);
   });
 });

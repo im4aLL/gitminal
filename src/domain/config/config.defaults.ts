@@ -1,4 +1,4 @@
-import { DEFAULT_THEME_NAME } from "@/domain/theme/theme.catppuccin";
+import { DEFAULT_THEME_NAME } from "@/domain/theme/theme.registry";
 import type { ConfigFilePaths, GitminalConfig } from "./config.types";
 
 /** Current configuration schema version. */
@@ -28,4 +28,5 @@ export const UNRESOLVED_CONFIG_PATHS: ConfigFilePaths = Object.freeze({
   config: null,
   keybindings: null,
   theme: null,
+  themesDir: null,
 });

@@ -16,6 +16,9 @@ export const HELP_LOAD_STATUS_LABEL = "Load status";
 /** Label of the active theme row. */
 export const HELP_ACTIVE_THEME_LABEL = "Active theme";
 
+/** Label of the resolved user themes directory row. */
+export const HELP_THEMES_DIR_LABEL = "Themes directory";
+
 /** Maximum configuration warnings rendered in the section. */
 export const HELP_MAX_WARNINGS = 5;
 
